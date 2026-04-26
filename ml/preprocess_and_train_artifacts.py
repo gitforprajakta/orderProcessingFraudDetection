@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Build SageMaker-ready training CSV + JSON artifacts for FraudLambda inference.
-Uses synthetic_fraud_dataset.csv (label column: Fraud_Label).
+Build local preprocessing artifacts from synthetic_fraud_dataset.csv.
+The AWS Fraud Lambda currently uses a lightweight rule scorer, not this model.
 """
 from __future__ import annotations
 
@@ -20,7 +20,6 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_CSV = ROOT / "data" / "synthetic_fraud_dataset.csv"
-ARTIFACT_DIR_SVC = ROOT.parent / "services" / "fraud_service" / "artifacts"
 ARTIFACT_DIR_ML = ROOT / "artifacts"
 
 
@@ -30,8 +29,10 @@ def load_and_engineer(csv_path: Path) -> pd.DataFrame:
         raise ValueError("Expected column Fraud_Label")
 
     ts = pd.to_datetime(df["Timestamp"], errors="coerce")
-    df["hour"] = ts.dt.hour.fillna(12).astype(int)
-    df["dow"] = ts.dt.dayofweek.fillna(0).astype(int)
+    df = df.assign(
+        hour=ts.dt.hour.fillna(12).astype(int),
+        dow=ts.dt.dayofweek.fillna(0).astype(int),
+    )
 
     df = df.drop(
         columns=["Transaction_ID", "User_ID", "Timestamp"],
@@ -128,18 +129,12 @@ def main() -> None:
         "--out-ml",
         type=Path,
         default=ARTIFACT_DIR_ML,
-        help="Output directory for train.csv and preprocessor joblib",
-    )
-    parser.add_argument(
-        "--out-service",
-        type=Path,
-        default=ARTIFACT_DIR_SVC,
-        help="Copy artifacts here for Lambda packaging",
+        help="Output directory for train.csv and preprocessor artifacts",
     )
     parser.add_argument(
         "--train-csv-no-header",
         action="store_true",
-        help="Write train.csv without header (some SageMaker XGBoost examples)",
+        help="Write train.csv without header",
     )
     args = parser.parse_args()
 
@@ -166,10 +161,8 @@ def main() -> None:
     }
 
     args.out_ml.mkdir(parents=True, exist_ok=True)
-    args.out_service.mkdir(parents=True, exist_ok=True)
-
     train_path = args.out_ml / "train.csv"
-    # SageMaker XGBoost: label in first column
+    # Keep label in the first column for common XGBoost CSV training flows.
     train_mat = np.hstack([y_train.values.reshape(-1, 1), X_tr])
     val_mat = np.hstack([y_val.values.reshape(-1, 1), X_va])
 
@@ -192,17 +185,9 @@ def main() -> None:
     pre_path = args.out_ml / "sklearn_preprocessor.joblib"
     joblib.dump(pre, pre_path)
 
-    # Copy JSON artifacts to fraud service (Lambda uses inference_spec only)
-    svc_meta = args.out_service / "preprocess_meta.json"
-    svc_inf = args.out_service / "inference_spec.json"
-    import shutil
-
-    shutil.copy2(meta_path, svc_meta)
-    shutil.copy2(inf_path, svc_inf)
-
     print(f"Wrote {train_path} shape={train_mat.shape}")
     print(f"Wrote {pre_path}")
-    print(f"Wrote {inf_path} and copied to {svc_inf}")
+    print(f"Wrote {inf_path}")
     print(f"Validation matrix shape {val_mat.shape} (for optional local XGB eval)")
 
     # Quick XGBoost offline metrics (optional)
