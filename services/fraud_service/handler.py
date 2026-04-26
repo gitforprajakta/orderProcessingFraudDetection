@@ -1,14 +1,16 @@
 import json
 import os
 import time
+from decimal import Decimal
 
 import boto3
 
-from order_features import order_detail_to_feature_vector, vector_to_csv_line
+from order_features import order_detail_to_feature_vector
+from xgb_inference import predict_probability
 
 
+ddb = boto3.resource("dynamodb")
 events = boto3.client("events")
-sagemaker_runtime = boto3.client("sagemaker-runtime")
 
 
 def _clamp01(x: float) -> float:
@@ -17,12 +19,12 @@ def _clamp01(x: float) -> float:
 
 def _local_score(detail: dict) -> float:
     """
-    Deterministic heuristic scorer so the event-driven system is testable
-    without provisioning SageMaker immediately.
+    Deterministic fraud scorer for AWS testing without an ML endpoint.
+    The thresholds are intentionally simple so test orders are predictable.
     """
     total = float(detail.get("orderTotal", 0.0))
     country = str(detail.get("shippingCountry", "")).upper()
-    item_count = len(detail.get("items", []) or [])
+    item_count = sum(int(item.get("qty", 1)) for item in detail.get("items", []) or [])
 
     score = 0.05
     if total > 500:
@@ -37,36 +39,51 @@ def _local_score(detail: dict) -> float:
     return _clamp01(score)
 
 
-def _sagemaker_score(detail: dict) -> float:
-    endpoint = os.environ["SAGEMAKER_ENDPOINT_NAME"]
-    vec = order_detail_to_feature_vector(detail)
-    payload = vector_to_csv_line(vec)
+def _xgboost_score(detail: dict) -> float:
+    features = order_detail_to_feature_vector(detail)
+    return _clamp01(predict_probability(features))
 
-    resp = sagemaker_runtime.invoke_endpoint(
-        EndpointName=endpoint,
-        ContentType="text/csv",
-        Body=payload.encode("utf-8"),
+
+def _update_order_status(order_id: str, out_detail: dict) -> None:
+    table_name = os.environ.get("ORDERS_TABLE_NAME")
+    if not table_name or order_id == "unknown":
+        return
+
+    table = ddb.Table(table_name)
+    table.update_item(
+        Key={"orderId": order_id},
+        UpdateExpression=(
+            "SET #status = :status, fraudDecision = :decision, "
+            "fraudScore = :score, fraudModelVersion = :model, evaluatedAt = :evaluated"
+        ),
+        ExpressionAttributeNames={"#status": "status"},
+        ExpressionAttributeValues={
+            ":status": out_detail["decision"],
+            ":decision": out_detail["decision"],
+            ":score": Decimal(str(out_detail["score"])),
+            ":model": out_detail["modelVersion"],
+            ":evaluated": out_detail["evaluatedAt"],
+        },
     )
-    raw = resp["Body"].read().decode("utf-8").strip()
-    # Built-in XGBoost binary:logistic returns a probability per row.
-    return _clamp01(float(raw))
 
 
 def handler(event, context):
     bus_name = os.environ["EVENT_BUS_NAME"]
-    mode = os.environ.get("FRAUD_SCORER_MODE", "local").lower()
     approve_th = float(os.environ.get("APPROVE_THRESHOLD", "0.30"))
     block_th = float(os.environ.get("BLOCK_THRESHOLD", "0.70"))
 
     detail = event.get("detail") or {}
     order_id = detail.get("orderId", "unknown")
-
-    if mode == "sagemaker":
-        score = _sagemaker_score(detail)
-        model_version = os.environ.get("MODEL_VERSION", "sagemaker")
-    else:
-        score = _local_score(detail)
-        model_version = "local-heuristic-v1"
+    rules_score = _local_score(detail)
+    try:
+        xgboost_score = _xgboost_score(detail)
+        score = max(xgboost_score, rules_score)
+        model_version = "lambda-xgboost-json-v1+rules-v1"
+    except Exception as exc:
+        # Keep the event flow working, but make the fallback visible in logs.
+        print(f"XGBoost Lambda inference failed; falling back to local rules: {exc}")
+        score = rules_score
+        model_version = "local-rules-v1"
 
     if score < approve_th:
         decision = "APPROVE"
@@ -86,6 +103,7 @@ def handler(event, context):
         "thresholds": {"approve": approve_th, "block": block_th},
         "evaluatedAt": int(time.time() * 1000),
     }
+    _update_order_status(order_id, out_detail)
 
     events.put_events(
         Entries=[

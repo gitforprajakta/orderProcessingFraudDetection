@@ -5,10 +5,11 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
-import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as s3 from "aws-cdk-lib/aws-s3";
+import * as logs from "aws-cdk-lib/aws-logs";
 import * as sns from "aws-cdk-lib/aws-sns";
+import * as cr from "aws-cdk-lib/custom-resources";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export class PlatformStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -31,22 +32,14 @@ export class PlatformStack extends cdk.Stack {
       topicName: "OrderNotificationsTopic",
     });
 
-    const mlBucket = new s3.Bucket(this, "MlArtifactsBucket", {
-      bucketName: undefined,
-      autoDeleteObjects: true,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    const sageMakerRole = new iam.Role(this, "SageMakerExecutionRole", {
-      assumedBy: new iam.ServicePrincipal("sagemaker.amazonaws.com"),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonSageMakerFullAccess"),
-      ],
-    });
-    mlBucket.grantReadWrite(sageMakerRole);
+    const orderLambdaName = "OrderProcessingFraudDetection-OrderLambda";
+    const fraudLambdaName = "OrderProcessingFraudDetection-FraudLambda";
+    const notificationLambdaName =
+      "OrderProcessingFraudDetection-NotificationLambda";
 
     // Lambdas (Python)
     const orderLambda = new lambda.Function(this, "OrderLambda", {
+      functionName: orderLambdaName,
       runtime: lambda.Runtime.PYTHON_3_11,
       code: lambda.Code.fromAsset("services/order_service"),
       handler: "handler.handler",
@@ -58,19 +51,23 @@ export class PlatformStack extends cdk.Stack {
     });
 
     const fraudLambda = new lambda.Function(this, "FraudLambda", {
+      functionName: fraudLambdaName,
       runtime: lambda.Runtime.PYTHON_3_11,
       code: lambda.Code.fromAsset("services/fraud_service"),
       handler: "handler.handler",
-      timeout: cdk.Duration.seconds(10),
+      timeout: cdk.Duration.seconds(15),
+      memorySize: 512,
       environment: {
         EVENT_BUS_NAME: bus.eventBusName,
-        FRAUD_SCORER_MODE: "local",
+        ORDERS_TABLE_NAME: ordersTable.tableName,
+        MODEL_ARTIFACT_DIR: "artifacts",
         APPROVE_THRESHOLD: "0.30",
         BLOCK_THRESHOLD: "0.70",
       },
     });
 
     const notificationLambda = new lambda.Function(this, "NotificationLambda", {
+      functionName: notificationLambdaName,
       runtime: lambda.Runtime.PYTHON_3_11,
       code: lambda.Code.fromAsset("services/notification_service"),
       handler: "handler.handler",
@@ -80,17 +77,24 @@ export class PlatformStack extends cdk.Stack {
       },
     });
 
+    [
+      orderLambdaName,
+      fraudLambdaName,
+      notificationLambdaName,
+    ].forEach((functionName) => {
+      new logs.LogGroup(this, `${functionName}LogGroup`, {
+        logGroupName: `/aws/lambda/${functionName}`,
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+    });
+
     // Permissions
     ordersTable.grantWriteData(orderLambda);
     bus.grantPutEventsTo(orderLambda);
 
+    ordersTable.grantWriteData(fraudLambda);
     bus.grantPutEventsTo(fraudLambda);
-    fraudLambda.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["sagemaker:InvokeEndpoint"],
-        resources: ["*"],
-      })
-    );
 
     topic.grantPublish(notificationLambda);
 
@@ -132,10 +136,85 @@ export class PlatformStack extends cdk.Stack {
       generateSecret: false,
     });
 
+    const demoUsername = "testuser";
+    const demoPassword = "YourSecurePassw0rd!";
+    const demoUserHandler = new lambda.Function(this, "DemoUserHandler", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "index.handler",
+      timeout: cdk.Duration.seconds(30),
+      code: lambda.Code.fromInline(`
+import boto3
+
+cognito = boto3.client("cognito-idp")
+
+
+def handler(event, context):
+    props = event["ResourceProperties"]
+    user_pool_id = props["UserPoolId"]
+    username = props["Username"]
+    password = props["Password"]
+    email = props["Email"]
+    physical_id = f"{user_pool_id}:{username}"
+
+    if event["RequestType"] == "Delete":
+        return {"PhysicalResourceId": physical_id}
+
+    try:
+        cognito.admin_get_user(UserPoolId=user_pool_id, Username=username)
+    except cognito.exceptions.UserNotFoundException:
+        cognito.admin_create_user(
+            UserPoolId=user_pool_id,
+            Username=username,
+            UserAttributes=[
+                {"Name": "email", "Value": email},
+                {"Name": "email_verified", "Value": "true"},
+            ],
+            MessageAction="SUPPRESS",
+        )
+
+    cognito.admin_set_user_password(
+        UserPoolId=user_pool_id,
+        Username=username,
+        Password=password,
+        Permanent=True,
+    )
+    return {"PhysicalResourceId": physical_id}
+`),
+    });
+    demoUserHandler.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminSetUserPassword",
+        ],
+        resources: [userPool.userPoolArn],
+      })
+    );
+
+    const demoUserProvider = new cr.Provider(this, "DemoUserProvider", {
+      onEventHandler: demoUserHandler,
+    });
+
+    new cdk.CustomResource(this, "DemoUser", {
+      serviceToken: demoUserProvider.serviceToken,
+      properties: {
+        UserPoolId: userPool.userPoolId,
+        Username: demoUsername,
+        Password: demoPassword,
+        Email: "testuser@example.com",
+      },
+    });
+
     // API Gateway
     const api = new apigw.RestApi(this, "OrdersApi", {
       restApiName: "OrdersApi",
       deployOptions: { tracingEnabled: false },
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigw.Cors.ALL_ORIGINS,
+        allowMethods: ["OPTIONS", "POST"],
+        allowHeaders: ["Authorization", "Content-Type"],
+      },
     });
 
     const authorizer = new apigw.CognitoUserPoolsAuthorizer(
@@ -159,9 +238,17 @@ export class PlatformStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, "OrdersEventBusName", { value: bus.eventBusName });
     new cdk.CfnOutput(this, "OrdersTableName", { value: ordersTable.tableName });
-    new cdk.CfnOutput(this, "MlArtifactsBucketName", { value: mlBucket.bucketName });
-    new cdk.CfnOutput(this, "SageMakerExecutionRoleArn", {
-      value: sageMakerRole.roleArn,
+    new cdk.CfnOutput(this, "OrderLambdaName", {
+      value: orderLambda.functionName,
+    });
+    new cdk.CfnOutput(this, "FraudLambdaName", {
+      value: fraudLambda.functionName,
+    });
+    new cdk.CfnOutput(this, "NotificationLambdaName", {
+      value: notificationLambda.functionName,
+    });
+    new cdk.CfnOutput(this, "OrderNotificationsTopicArn", {
+      value: topic.topicArn,
     });
   }
 }

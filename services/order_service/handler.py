@@ -10,6 +10,13 @@ import boto3
 ddb = boto3.resource("dynamodb")
 events = boto3.client("events")
 
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Authorization,Content-Type",
+    "Access-Control-Allow-Methods": "OPTIONS,POST",
+    "Content-Type": "application/json",
+}
+
 
 def _to_decimal(value: float) -> Decimal:
     """DynamoDB Table API rejects Python float; Decimal is required for numbers."""
@@ -19,7 +26,7 @@ def _to_decimal(value: float) -> Decimal:
 def _bad_request(message: str):
     return {
         "statusCode": 400,
-        "headers": {"Content-Type": "application/json"},
+        "headers": CORS_HEADERS,
         "body": json.dumps({"message": message}),
     }
 
@@ -121,7 +128,7 @@ def handler(event, context):
 
     return {
         "statusCode": 202,
-        "headers": {"Content-Type": "application/json"},
+        "headers": CORS_HEADERS,
         "body": json.dumps({"orderId": order_id, "status": "PENDING"}),
     }
 

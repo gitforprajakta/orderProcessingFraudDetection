@@ -1,10 +1,11 @@
 """
-Map OrderCreated event detail -> same feature vector as ml/preprocess_and_train_artifacts.py
-using inference_spec.json (no sklearn in Lambda).
+Map an OrderCreated event into the same preprocessed feature vector used
+when training the local XGBoost model.
 """
 from __future__ import annotations
 
 import json
+import math
 import os
 import time
 from pathlib import Path
@@ -17,57 +18,65 @@ def _load_spec() -> dict[str, Any]:
     global _SPEC_CACHE
     if _SPEC_CACHE is not None:
         return _SPEC_CACHE
+
     here = Path(__file__).resolve().parent
-    path = os.environ.get("INFERENCE_SPEC_PATH", str(here / "artifacts" / "inference_spec.json"))
-    with open(path, encoding="utf-8") as f:
+    artifact_dir = Path(os.environ.get("MODEL_ARTIFACT_DIR", str(here / "artifacts")))
+    with open(artifact_dir / "inference_spec.json", encoding="utf-8") as f:
         _SPEC_CACHE = json.load(f)
     return _SPEC_CACHE
 
 
 def _location_from_country(code: str) -> str:
-    c = (code or "").upper()
     mapping = {
         "US": "New York",
+        "CA": "New York",
         "GB": "London",
         "UK": "London",
         "IN": "Mumbai",
         "AU": "Sydney",
         "JP": "Tokyo",
-        "CA": "New York",
     }
-    return mapping.get(c, "New York")
+    return mapping.get((code or "").upper(), "New York")
 
 
-def order_detail_to_feature_vector(detail: dict) -> list[float]:
-    """Build CSV row matching SageMaker training features (preprocessed space)."""
+def order_detail_to_feature_vector(detail: dict[str, Any]) -> list[float]:
     spec = _load_spec()
     num_names = spec["numeric_features"]
     cat_names = spec["categorical_features"]
     medians = dict(zip(num_names, spec["numeric_imputer_medians"]))
+
     order_total = float(detail.get("orderTotal", 0.0))
     items = detail.get("items") or []
-    nitems = max(1, len(items))
+    item_count = max(1, sum(int(item.get("qty", 1)) for item in items))
     created_ms = int(detail.get("createdAt", int(time.time() * 1000)))
-    t = time.gmtime(created_ms / 1000.0)
-    hour = t.tm_hour
-    dow = t.tm_wday
-    is_weekend = 1 if dow >= 5 else 0
+    created = time.gmtime(created_ms / 1000.0)
     country = str(detail.get("shippingCountry", "US"))
+    high_risk_country = country.upper() not in {"US", "CA"}
+    risk_score = 0.10
+    if order_total > 500:
+        risk_score += 0.25
+    if order_total > 1500:
+        risk_score += 0.35
+    if high_risk_country:
+        risk_score += 0.20
+    if item_count >= 5:
+        risk_score += 0.10
+    risk_score = min(risk_score, 0.99)
 
     raw_num = {
         "Transaction_Amount": order_total,
         "Account_Balance": medians["Account_Balance"],
-        "IP_Address_Flag": 0.0,
-        "Previous_Fraudulent_Activity": 0.0,
-        "Daily_Transaction_Count": float(nitems),
+        "IP_Address_Flag": 1.0 if high_risk_country else 0.0,
+        "Previous_Fraudulent_Activity": 1.0 if risk_score >= 0.80 else 0.0,
+        "Daily_Transaction_Count": float(item_count),
         "Avg_Transaction_Amount_7d": order_total * 1.1,
-        "Failed_Transaction_Count_7d": 0.0,
+        "Failed_Transaction_Count_7d": 3.0 if risk_score >= 0.70 else 0.0,
         "Card_Age": 120.0,
-        "Transaction_Distance": 800.0,
-        "Risk_Score": 0.45,
-        "Is_Weekend": float(is_weekend),
-        "hour": float(hour),
-        "dow": float(dow),
+        "Transaction_Distance": 2500.0 if high_risk_country else 300.0,
+        "Risk_Score": risk_score,
+        "Is_Weekend": 1.0 if created.tm_wday >= 5 else 0.0,
+        "hour": float(created.tm_hour),
+        "dow": float(created.tm_wday),
     }
 
     raw_cat = {
@@ -79,24 +88,19 @@ def order_detail_to_feature_vector(detail: dict) -> list[float]:
         "Authentication_Method": "OTP",
     }
 
-    nums: list[float] = []
-    for idx, n in enumerate(num_names):
-        v = raw_num[n]
-        mu = spec["numeric_scaler_mean"][idx]
-        sc = spec["numeric_scaler_scale"][idx] or 1.0
-        m = medians[n]
-        imputed = float(v) if v == v else m  # nan check
-        nums.append((imputed - mu) / sc)
+    numeric_values: list[float] = []
+    for idx, name in enumerate(num_names):
+        value = float(raw_num[name])
+        if math.isnan(value):
+            value = float(medians[name])
+        mean = float(spec["numeric_scaler_mean"][idx])
+        scale = float(spec["numeric_scaler_scale"][idx]) or 1.0
+        numeric_values.append((value - mean) / scale)
 
-    onehot: list[float] = []
-    for ci, cname in enumerate(cat_names):
-        allowed = spec["categorical_categories"][ci]
-        val = raw_cat[cname]
-        for a in allowed:
-            onehot.append(1.0 if str(val) == str(a) else 0.0)
+    one_hot_values: list[float] = []
+    for idx, name in enumerate(cat_names):
+        value = str(raw_cat[name])
+        for category in spec["categorical_categories"][idx]:
+            one_hot_values.append(1.0 if value == str(category) else 0.0)
 
-    return nums + onehot
-
-
-def vector_to_csv_line(vec: list[float]) -> str:
-    return ",".join(f"{x:.8g}" for x in vec)
+    return numeric_values + one_hot_values
