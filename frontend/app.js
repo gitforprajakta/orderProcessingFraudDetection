@@ -6,9 +6,9 @@ const output = document.getElementById("output");
 const submitBtn = document.getElementById("submitBtn");
 
 const APP_CONFIG = {
-  apiUrl: "https://ylplykxmcl.execute-api.us-west-2.amazonaws.com/prod",
+  apiUrl: "https://w6yswx6f02.execute-api.us-west-2.amazonaws.com/prod",
   awsRegion: "us-west-2",
-  userPoolClientId: "3id9o7r73hoihu8s8hfde4s820",
+  userPoolClientId: "7mskkpiid0qdjbvh3b0k0o60h5",
   username: "testuser",
   password: "YourSecurePassw0rd!",
 };
