@@ -69,6 +69,10 @@ label {
   color: var(--muted);
 }
 
+.required-mark {
+  color: var(--danger);
+}
+
 input,
 textarea,
 select,
