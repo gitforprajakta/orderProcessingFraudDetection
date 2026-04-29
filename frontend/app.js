@@ -7,8 +7,8 @@ const submitBtn = document.getElementById("submitBtn");
 
 const APP_CONFIG = {
   apiUrl: "https://j6cq4fhg2i.execute-api.us-west-1.amazonaws.com/prod",
-  awsRegion: "us-west-2",
-  userPoolClientId: "3id9o7r73hoihu8s8hfde4s820",
+  awsRegion: "us-west-1",
+  userPoolClientId: "32skneju4gl7d07an9hkm5to33",
   username: "testuser",
   password: "YourSecurePassw0rd!",
 };
