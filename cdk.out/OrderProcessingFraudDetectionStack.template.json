@@ -8,9 +8,35 @@
      {
       "AttributeName": "orderId",
       "AttributeType": "S"
+     },
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "createdAt",
+      "AttributeType": "N"
      }
     ],
     "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "userId-createdAt-index",
+      "KeySchema": [
+       {
+        "AttributeName": "userId",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "createdAt",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
     "KeySchema": [
      {
       "AttributeName": "orderId",
@@ -22,6 +48,70 @@
    "DeletionPolicy": "Delete",
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersTable/Resource"
+   }
+  },
+  "ProductsTable241ADBFF": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "sku",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "category",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "category-index",
+      "KeySchema": [
+       {
+        "AttributeName": "category",
+        "KeyType": "HASH"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "sku",
+      "KeyType": "HASH"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ProductsTable/Resource"
+   }
+  },
+  "CartsTableF57A4C06": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "userId",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "userId",
+      "KeyType": "HASH"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/CartsTable/Resource"
    }
   },
   "OrdersBus68D47F66": {
@@ -40,6 +130,212 @@
    },
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderNotificationsTopic/Resource"
+   }
+  },
+  "ProductImagesBucket03BDA4C8": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "CorsConfiguration": {
+     "CorsRules": [
+      {
+       "AllowedHeaders": [
+        "*"
+       ],
+       "AllowedMethods": [
+        "GET",
+        "PUT",
+        "HEAD"
+       ],
+       "AllowedOrigins": [
+        "*"
+       ],
+       "ExposedHeaders": [
+        "ETag"
+       ]
+      }
+     ]
+    },
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "BlockPublicPolicy": false,
+     "IgnorePublicAcls": true,
+     "RestrictPublicBuckets": false
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ProductImagesBucket/Resource"
+   }
+  },
+  "ProductImagesBucketPolicyA2B0CBED": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "ProductImagesBucket03BDA4C8"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:GetObject",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "ProductImagesBucket03BDA4C8",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductImagesBucket03BDA4C8",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductImagesBucket03BDA4C8",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ProductImagesBucket/Policy/Resource"
+   }
+  },
+  "ProductImagesBucketAutoDeleteObjectsCustomResourceB27E6F1C": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "ProductImagesBucket03BDA4C8"
+    }
+   },
+   "DependsOn": [
+    "ProductImagesBucketPolicyA2B0CBED"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ProductImagesBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "ProductImagesBucket03BDA4C8"
+       },
+       " S3 bucket."
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+    "aws:asset:property": "Code"
    }
   },
   "OrderLambdaServiceRoleD5490479": {
@@ -83,6 +379,11 @@
      "Statement": [
       {
        "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
         "dynamodb:BatchWriteItem",
         "dynamodb:PutItem",
         "dynamodb:UpdateItem",
@@ -94,6 +395,153 @@
         {
          "Fn::GetAtt": [
           "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "CartsTableF57A4C06",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "CartsTableF57A4C06",
           "Arn"
          ]
         }
@@ -130,12 +578,18 @@
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
      },
-     "S3Key": "3c7bd8f814cfc0d32e8f5d3e2376b2398a8ddfe86dabc48d34891114d3e6023d.zip"
+     "S3Key": "b2566963ae6f2d4fd02c7f81ffcf8ce2f953067df6cd5b9f0971a5a071babb12.zip"
     },
     "Environment": {
      "Variables": {
       "ORDERS_TABLE_NAME": {
        "Ref": "OrdersTable315BB997"
+      },
+      "PRODUCTS_TABLE_NAME": {
+       "Ref": "ProductsTable241ADBFF"
+      },
+      "CARTS_TABLE_NAME": {
+       "Ref": "CartsTableF57A4C06"
       },
       "EVENT_BUS_NAME": {
        "Ref": "OrdersBus68D47F66"
@@ -151,7 +605,7 @@
      ]
     },
     "Runtime": "python3.11",
-    "Timeout": 10
+    "Timeout": 15
    },
    "DependsOn": [
     "OrderLambdaServiceRoleDefaultPolicyB925A13D",
@@ -159,7 +613,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderLambda/Resource",
-    "aws:asset:path": "asset.3c7bd8f814cfc0d32e8f5d3e2376b2398a8ddfe86dabc48d34891114d3e6023d",
+    "aws:asset:path": "asset.b2566963ae6f2d4fd02c7f81ffcf8ce2f953067df6cd5b9f0971a5a071babb12",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -217,6 +671,20 @@
          "Fn::GetAtt": [
           "OrdersTable315BB997",
           "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
          ]
         }
        ]
@@ -388,6 +856,1094 @@
     "aws:asset:property": "Code"
    }
   },
+  "ProductsLambdaServiceRole760C79AE": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ProductsLambda/ServiceRole/Resource"
+   }
+  },
+  "ProductsLambdaServiceRoleDefaultPolicy79DB2473": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "ProductsLambdaServiceRoleDefaultPolicy79DB2473",
+    "Roles": [
+     {
+      "Ref": "ProductsLambdaServiceRole760C79AE"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ProductsLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "ProductsLambda1FF938FD": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "2582b03840e370a742603abd2bfe115faf5cdcbb78768900251aa2b7551693d5.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "PRODUCTS_TABLE_NAME": {
+       "Ref": "ProductsTable241ADBFF"
+      },
+      "IMAGES_BUCKET_NAME": {
+       "Ref": "ProductImagesBucket03BDA4C8"
+      },
+      "ADMIN_GROUP": "admins"
+     }
+    },
+    "FunctionName": "OrderProcessingFraudDetection-ProductsLambda",
+    "Handler": "handler.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "ProductsLambdaServiceRole760C79AE",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "ProductsLambdaServiceRoleDefaultPolicy79DB2473",
+    "ProductsLambdaServiceRole760C79AE"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ProductsLambda/Resource",
+    "aws:asset:path": "asset.2582b03840e370a742603abd2bfe115faf5cdcbb78768900251aa2b7551693d5",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "CartLambdaServiceRoleE244D3D1": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/CartLambda/ServiceRole/Resource"
+   }
+  },
+  "CartLambdaServiceRoleDefaultPolicyF0C7933E": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "CartsTableF57A4C06",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "CartsTableF57A4C06",
+          "Arn"
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CartLambdaServiceRoleDefaultPolicyF0C7933E",
+    "Roles": [
+     {
+      "Ref": "CartLambdaServiceRoleE244D3D1"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/CartLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "CartLambdaD2687422": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "a0dad7ac518eb28dbd07d0673b019719258768b3af6d5ff157c46a3fb8f22473.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "CARTS_TABLE_NAME": {
+       "Ref": "CartsTableF57A4C06"
+      },
+      "PRODUCTS_TABLE_NAME": {
+       "Ref": "ProductsTable241ADBFF"
+      }
+     }
+    },
+    "FunctionName": "OrderProcessingFraudDetection-CartLambda",
+    "Handler": "handler.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CartLambdaServiceRoleE244D3D1",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "CartLambdaServiceRoleDefaultPolicyF0C7933E",
+    "CartLambdaServiceRoleE244D3D1"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/CartLambda/Resource",
+    "aws:asset:path": "asset.a0dad7ac518eb28dbd07d0673b019719258768b3af6d5ff157c46a3fb8f22473",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "MyOrdersLambdaServiceRoleFEB24F0C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/MyOrdersLambda/ServiceRole/Resource"
+   }
+  },
+  "MyOrdersLambdaServiceRoleDefaultPolicy50472C09": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "MyOrdersLambdaServiceRoleDefaultPolicy50472C09",
+    "Roles": [
+     {
+      "Ref": "MyOrdersLambdaServiceRoleFEB24F0C"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/MyOrdersLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "MyOrdersLambda6EF2C9AB": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "d3ab693f2309ae0e9acc26de079013c13a7acc872377a902901e906d27fbbec6.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ORDERS_TABLE_NAME": {
+       "Ref": "OrdersTable315BB997"
+      },
+      "ORDERS_USER_INDEX": "userId-createdAt-index"
+     }
+    },
+    "FunctionName": "OrderProcessingFraudDetection-MyOrdersLambda",
+    "Handler": "handler.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "MyOrdersLambdaServiceRoleFEB24F0C",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "MyOrdersLambdaServiceRoleDefaultPolicy50472C09",
+    "MyOrdersLambdaServiceRoleFEB24F0C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/MyOrdersLambda/Resource",
+    "aws:asset:path": "asset.d3ab693f2309ae0e9acc26de079013c13a7acc872377a902901e906d27fbbec6",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "AdminLambdaServiceRole5EEFE3C9": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/AdminLambda/ServiceRole/Resource"
+   }
+  },
+  "AdminLambdaServiceRoleDefaultPolicy90F8EC81": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "events:PutEvents",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "OrdersBus68D47F66",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "AdminLambdaServiceRoleDefaultPolicy90F8EC81",
+    "Roles": [
+     {
+      "Ref": "AdminLambdaServiceRole5EEFE3C9"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/AdminLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "AdminLambda7A0A34D4": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "90ab9e861664bd2a05f147d0e8420f00825c69a2a674ba5b9d7954e0406d24d6.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ORDERS_TABLE_NAME": {
+       "Ref": "OrdersTable315BB997"
+      },
+      "PRODUCTS_TABLE_NAME": {
+       "Ref": "ProductsTable241ADBFF"
+      },
+      "EVENT_BUS_NAME": {
+       "Ref": "OrdersBus68D47F66"
+      },
+      "ADMIN_GROUP": "admins"
+     }
+    },
+    "FunctionName": "OrderProcessingFraudDetection-AdminLambda",
+    "Handler": "handler.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "AdminLambdaServiceRole5EEFE3C9",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 15
+   },
+   "DependsOn": [
+    "AdminLambdaServiceRoleDefaultPolicy90F8EC81",
+    "AdminLambdaServiceRole5EEFE3C9"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/AdminLambda/Resource",
+    "aws:asset:path": "asset.90ab9e861664bd2a05f147d0e8420f00825c69a2a674ba5b9d7954e0406d24d6",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "UploadLambdaServiceRole7676E203": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/UploadLambda/ServiceRole/Resource"
+   }
+  },
+  "UploadLambdaServiceRoleDefaultPolicyCD46782A": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:PutObject",
+        "s3:PutObjectLegalHold",
+        "s3:PutObjectRetention",
+        "s3:PutObjectTagging",
+        "s3:PutObjectVersionTagging",
+        "s3:Abort*"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "ProductImagesBucket03BDA4C8",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "UploadLambdaServiceRoleDefaultPolicyCD46782A",
+    "Roles": [
+     {
+      "Ref": "UploadLambdaServiceRole7676E203"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/UploadLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "UploadLambdaF57B15C3": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "64ee1f48a93e722e3cd48b6157f97827337d3540fe0cbc299f7a1709ffcd2dc4.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "IMAGES_BUCKET_NAME": {
+       "Ref": "ProductImagesBucket03BDA4C8"
+      },
+      "ADMIN_GROUP": "admins"
+     }
+    },
+    "FunctionName": "OrderProcessingFraudDetection-UploadLambda",
+    "Handler": "handler.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "UploadLambdaServiceRole7676E203",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 10
+   },
+   "DependsOn": [
+    "UploadLambdaServiceRoleDefaultPolicyCD46782A",
+    "UploadLambdaServiceRole7676E203"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/UploadLambda/Resource",
+    "aws:asset:path": "asset.64ee1f48a93e722e3cd48b6157f97827337d3540fe0cbc299f7a1709ffcd2dc4",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StockRestoreLambdaServiceRole5CD72B26": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/StockRestoreLambda/ServiceRole/Resource"
+   }
+  },
+  "StockRestoreLambdaServiceRoleDefaultPolicyBAB849AD": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StockRestoreLambdaServiceRoleDefaultPolicyBAB849AD",
+    "Roles": [
+     {
+      "Ref": "StockRestoreLambdaServiceRole5CD72B26"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/StockRestoreLambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "StockRestoreLambdaD20C0960": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "b71ae9829e1da6ef96e95e0c4e705288f81979254e6c5614dd4a0d4c81f00410.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ORDERS_TABLE_NAME": {
+       "Ref": "OrdersTable315BB997"
+      },
+      "PRODUCTS_TABLE_NAME": {
+       "Ref": "ProductsTable241ADBFF"
+      }
+     }
+    },
+    "FunctionName": "OrderProcessingFraudDetection-StockRestoreLambda",
+    "Handler": "handler.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "StockRestoreLambdaServiceRole5CD72B26",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 15
+   },
+   "DependsOn": [
+    "StockRestoreLambdaServiceRoleDefaultPolicyBAB849AD",
+    "StockRestoreLambdaServiceRole5CD72B26"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/StockRestoreLambda/Resource",
+    "aws:asset:path": "asset.b71ae9829e1da6ef96e95e0c4e705288f81979254e6c5614dd4a0d4c81f00410",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
   "OrderProcessingFraudDetectionOrderLambdaLogGroupF965C4D7": {
    "Type": "AWS::Logs::LogGroup",
    "Properties": {
@@ -422,6 +1978,78 @@
    "DeletionPolicy": "Delete",
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-NotificationLambdaLogGroup/Resource"
+   }
+  },
+  "OrderProcessingFraudDetectionProductsLambdaLogGroupA4E67A21": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/lambda/OrderProcessingFraudDetection-ProductsLambda",
+    "RetentionInDays": 7
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-ProductsLambdaLogGroup/Resource"
+   }
+  },
+  "OrderProcessingFraudDetectionCartLambdaLogGroup7C64AC76": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/lambda/OrderProcessingFraudDetection-CartLambda",
+    "RetentionInDays": 7
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-CartLambdaLogGroup/Resource"
+   }
+  },
+  "OrderProcessingFraudDetectionMyOrdersLambdaLogGroup93DA4092": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/lambda/OrderProcessingFraudDetection-MyOrdersLambda",
+    "RetentionInDays": 7
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-MyOrdersLambdaLogGroup/Resource"
+   }
+  },
+  "OrderProcessingFraudDetectionAdminLambdaLogGroupB8CF42EB": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/lambda/OrderProcessingFraudDetection-AdminLambda",
+    "RetentionInDays": 7
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-AdminLambdaLogGroup/Resource"
+   }
+  },
+  "OrderProcessingFraudDetectionUploadLambdaLogGroup34124A1E": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/lambda/OrderProcessingFraudDetection-UploadLambda",
+    "RetentionInDays": 7
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-UploadLambdaLogGroup/Resource"
+   }
+  },
+  "OrderProcessingFraudDetectionStockRestoreLambdaLogGroup75557380": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/lambda/OrderProcessingFraudDetection-StockRestoreLambda",
+    "RetentionInDays": 7
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-StockRestoreLambdaLogGroup/Resource"
    }
   },
   "OnOrderCreatedC438101E": {
@@ -485,7 +2113,8 @@
     },
     "EventPattern": {
      "source": [
-      "fraud.service"
+      "fraud.service",
+      "admin.service"
      ],
      "detail-type": [
       "OrderApproved",
@@ -532,44 +2161,58 @@
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OnFraudDecision/AllowEventRuleOrderProcessingFraudDetectionStackNotificationLambda7327E3EE"
    }
   },
-  "UserPoolsmsRole4EA729DD": {
-   "Type": "AWS::IAM::Role",
+  "OnOrderBlockedRestoreStock3DF9C3F8": {
+   "Type": "AWS::Events::Rule",
    "Properties": {
-    "AssumeRolePolicyDocument": {
-     "Statement": [
-      {
-       "Action": "sts:AssumeRole",
-       "Condition": {
-        "StringEquals": {
-         "sts:ExternalId": "OrderProcessingFraudDetectionStackUserPool0FCDE7C8"
-        }
-       },
-       "Effect": "Allow",
-       "Principal": {
-        "Service": "cognito-idp.amazonaws.com"
-       }
-      }
-     ],
-     "Version": "2012-10-17"
+    "EventBusName": {
+     "Ref": "OrdersBus68D47F66"
     },
-    "Policies": [
+    "EventPattern": {
+     "source": [
+      "fraud.service",
+      "admin.service"
+     ],
+     "detail-type": [
+      "OrderBlocked"
+     ]
+    },
+    "State": "ENABLED",
+    "Targets": [
      {
-      "PolicyDocument": {
-       "Statement": [
-        {
-         "Action": "sns:Publish",
-         "Effect": "Allow",
-         "Resource": "*"
-        }
-       ],
-       "Version": "2012-10-17"
+      "Arn": {
+       "Fn::GetAtt": [
+        "StockRestoreLambdaD20C0960",
+        "Arn"
+       ]
       },
-      "PolicyName": "sns-publish"
+      "Id": "Target0"
      }
     ]
    },
    "Metadata": {
-    "aws:cdk:path": "OrderProcessingFraudDetectionStack/UserPool/smsRole/Resource"
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OnOrderBlockedRestoreStock/Resource"
+   }
+  },
+  "OnOrderBlockedRestoreStockAllowEventRuleOrderProcessingFraudDetectionStackStockRestoreLambda0FCDD2E08D628C9D": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StockRestoreLambdaD20C0960",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "OnOrderBlockedRestoreStock3DF9C3F8",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OnOrderBlockedRestoreStock/AllowEventRuleOrderProcessingFraudDetectionStackStockRestoreLambda0FCDD2E0"
    }
   },
   "UserPool6BA7E5F2": {
@@ -578,30 +2221,19 @@
     "AccountRecoverySetting": {
      "RecoveryMechanisms": [
       {
-       "Name": "verified_phone_number",
-       "Priority": 1
-      },
-      {
        "Name": "verified_email",
-       "Priority": 2
+       "Priority": 1
       }
      ]
     },
     "AdminCreateUserConfig": {
-     "AllowAdminCreateUserOnly": true
+     "AllowAdminCreateUserOnly": false
     },
-    "AliasAttributes": [
-     "email"
-    ],
     "AutoVerifiedAttributes": [
      "email"
     ],
-    "EmailVerificationMessage": "The verification code to your new account is {####}",
-    "EmailVerificationSubject": "Verify your new account",
-    "EnabledMfas": [
-     "SMS_MFA"
-    ],
-    "MfaConfiguration": "OPTIONAL",
+    "EmailVerificationMessage": "Welcome! Your verification code is {####}",
+    "EmailVerificationSubject": "Verify your account",
     "Policies": {
      "PasswordPolicy": {
       "MinimumLength": 8,
@@ -610,20 +2242,21 @@
       "RequireUppercase": true
      }
     },
-    "SmsConfiguration": {
-     "ExternalId": "OrderProcessingFraudDetectionStackUserPool0FCDE7C8",
-     "SnsCallerArn": {
-      "Fn::GetAtt": [
-       "UserPoolsmsRole4EA729DD",
-       "Arn"
-      ]
+    "Schema": [
+     {
+      "Mutable": false,
+      "Name": "email",
+      "Required": true
      }
-    },
+    ],
     "SmsVerificationMessage": "The verification code to your new account is {####}",
+    "UsernameAttributes": [
+     "email"
+    ],
     "VerificationMessageTemplate": {
      "DefaultEmailOption": "CONFIRM_WITH_CODE",
-     "EmailMessage": "The verification code to your new account is {####}",
-     "EmailSubject": "Verify your new account",
+     "EmailMessage": "Welcome! Your verification code is {####}",
+     "EmailSubject": "Verify your account",
      "SmsMessage": "The verification code to your new account is {####}"
     }
    },
@@ -653,9 +2286,11 @@
     ],
     "ExplicitAuthFlows": [
      "ALLOW_USER_PASSWORD_AUTH",
+     "ALLOW_USER_SRP_AUTH",
      "ALLOW_REFRESH_TOKEN_AUTH"
     ],
     "GenerateSecret": false,
+    "PreventUserExistenceErrors": "ENABLED",
     "SupportedIdentityProviders": [
      "COGNITO"
     ],
@@ -667,7 +2302,35 @@
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/UserPool/UserPoolClient/Resource"
    }
   },
-  "DemoUserHandlerServiceRoleDACD35FD": {
+  "AdminsGroup": {
+   "Type": "AWS::Cognito::UserPoolGroup",
+   "Properties": {
+    "Description": "Administrators with inventory and review-order privileges",
+    "GroupName": "admins",
+    "Precedence": 1,
+    "UserPoolId": {
+     "Ref": "UserPool6BA7E5F2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/AdminsGroup"
+   }
+  },
+  "CustomersGroup": {
+   "Type": "AWS::Cognito::UserPoolGroup",
+   "Properties": {
+    "Description": "Regular shoppers (default group)",
+    "GroupName": "customers",
+    "Precedence": 10,
+    "UserPoolId": {
+     "Ref": "UserPool6BA7E5F2"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/CustomersGroup"
+   }
+  },
+  "DemoUsersHandlerServiceRoleB4F169D0": {
    "Type": "AWS::IAM::Role",
    "Properties": {
     "AssumeRolePolicyDocument": {
@@ -698,10 +2361,10 @@
     ]
    },
    "Metadata": {
-    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUserHandler/ServiceRole/Resource"
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUsersHandler/ServiceRole/Resource"
    }
   },
-  "DemoUserHandlerServiceRoleDefaultPolicy6A68F045": {
+  "DemoUsersHandlerServiceRoleDefaultPolicyE05D0AF1": {
    "Type": "AWS::IAM::Policy",
    "Properties": {
     "PolicyDocument": {
@@ -710,7 +2373,8 @@
        "Action": [
         "cognito-idp:AdminCreateUser",
         "cognito-idp:AdminGetUser",
-        "cognito-idp:AdminSetUserPassword"
+        "cognito-idp:AdminSetUserPassword",
+        "cognito-idp:AdminAddUserToGroup"
        ],
        "Effect": "Allow",
        "Resource": {
@@ -723,42 +2387,42 @@
      ],
      "Version": "2012-10-17"
     },
-    "PolicyName": "DemoUserHandlerServiceRoleDefaultPolicy6A68F045",
+    "PolicyName": "DemoUsersHandlerServiceRoleDefaultPolicyE05D0AF1",
     "Roles": [
      {
-      "Ref": "DemoUserHandlerServiceRoleDACD35FD"
+      "Ref": "DemoUsersHandlerServiceRoleB4F169D0"
      }
     ]
    },
    "Metadata": {
-    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUserHandler/ServiceRole/DefaultPolicy/Resource"
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUsersHandler/ServiceRole/DefaultPolicy/Resource"
    }
   },
-  "DemoUserHandler8E6E5E67": {
+  "DemoUsersHandler10B2C9BC": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
-     "ZipFile": "\nimport boto3\n\ncognito = boto3.client(\"cognito-idp\")\n\n\ndef handler(event, context):\n    props = event[\"ResourceProperties\"]\n    user_pool_id = props[\"UserPoolId\"]\n    username = props[\"Username\"]\n    password = props[\"Password\"]\n    email = props[\"Email\"]\n    physical_id = f\"{user_pool_id}:{username}\"\n\n    if event[\"RequestType\"] == \"Delete\":\n        return {\"PhysicalResourceId\": physical_id}\n\n    try:\n        cognito.admin_get_user(UserPoolId=user_pool_id, Username=username)\n    except cognito.exceptions.UserNotFoundException:\n        cognito.admin_create_user(\n            UserPoolId=user_pool_id,\n            Username=username,\n            UserAttributes=[\n                {\"Name\": \"email\", \"Value\": email},\n                {\"Name\": \"email_verified\", \"Value\": \"true\"},\n            ],\n            MessageAction=\"SUPPRESS\",\n        )\n\n    cognito.admin_set_user_password(\n        UserPoolId=user_pool_id,\n        Username=username,\n        Password=password,\n        Permanent=True,\n    )\n    return {\"PhysicalResourceId\": physical_id}\n"
+     "ZipFile": "\nimport boto3\n\ncognito = boto3.client(\"cognito-idp\")\n\n\ndef _ensure_user(user_pool_id, username, email, password, group):\n    try:\n        cognito.admin_get_user(UserPoolId=user_pool_id, Username=username)\n    except cognito.exceptions.UserNotFoundException:\n        cognito.admin_create_user(\n            UserPoolId=user_pool_id,\n            Username=username,\n            UserAttributes=[\n                {\"Name\": \"email\", \"Value\": email},\n                {\"Name\": \"email_verified\", \"Value\": \"true\"},\n            ],\n            MessageAction=\"SUPPRESS\",\n        )\n    cognito.admin_set_user_password(\n        UserPoolId=user_pool_id,\n        Username=username,\n        Password=password,\n        Permanent=True,\n    )\n    if group:\n        cognito.admin_add_user_to_group(\n            UserPoolId=user_pool_id,\n            Username=username,\n            GroupName=group,\n        )\n\n\ndef handler(event, context):\n    props = event[\"ResourceProperties\"]\n    user_pool_id = props[\"UserPoolId\"]\n    physical_id = f\"demo-users-{user_pool_id}\"\n\n    if event[\"RequestType\"] == \"Delete\":\n        return {\"PhysicalResourceId\": physical_id}\n\n    for u in props.get(\"Users\", []):\n        _ensure_user(\n            user_pool_id,\n            u[\"Username\"],\n            u[\"Email\"],\n            u[\"Password\"],\n            u.get(\"Group\", \"\"),\n        )\n\n    return {\"PhysicalResourceId\": physical_id}\n"
     },
     "Handler": "index.handler",
     "Role": {
      "Fn::GetAtt": [
-      "DemoUserHandlerServiceRoleDACD35FD",
+      "DemoUsersHandlerServiceRoleB4F169D0",
       "Arn"
      ]
     },
     "Runtime": "python3.11",
-    "Timeout": 30
+    "Timeout": 60
    },
    "DependsOn": [
-    "DemoUserHandlerServiceRoleDefaultPolicy6A68F045",
-    "DemoUserHandlerServiceRoleDACD35FD"
+    "DemoUsersHandlerServiceRoleDefaultPolicyE05D0AF1",
+    "DemoUsersHandlerServiceRoleB4F169D0"
    ],
    "Metadata": {
-    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUserHandler/Resource"
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUsersHandler/Resource"
    }
   },
-  "DemoUserProviderframeworkonEventServiceRoleD9E1119F": {
+  "DemoUsersProviderframeworkonEventServiceRole9BAC388F": {
    "Type": "AWS::IAM::Role",
    "Properties": {
     "AssumeRolePolicyDocument": {
@@ -789,10 +2453,10 @@
     ]
    },
    "Metadata": {
-    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUserProvider/framework-onEvent/ServiceRole/Resource"
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUsersProvider/framework-onEvent/ServiceRole/Resource"
    }
   },
-  "DemoUserProviderframeworkonEventServiceRoleDefaultPolicyA02F8702": {
+  "DemoUsersProviderframeworkonEventServiceRoleDefaultPolicy8755D754": {
    "Type": "AWS::IAM::Policy",
    "Properties": {
     "PolicyDocument": {
@@ -803,7 +2467,7 @@
        "Resource": [
         {
          "Fn::GetAtt": [
-          "DemoUserHandler8E6E5E67",
+          "DemoUsersHandler10B2C9BC",
           "Arn"
          ]
         },
@@ -813,7 +2477,7 @@
           [
            {
             "Fn::GetAtt": [
-             "DemoUserHandler8E6E5E67",
+             "DemoUsersHandler10B2C9BC",
              "Arn"
             ]
            },
@@ -828,7 +2492,7 @@
        "Effect": "Allow",
        "Resource": {
         "Fn::GetAtt": [
-         "DemoUserHandler8E6E5E67",
+         "DemoUsersHandler10B2C9BC",
          "Arn"
         ]
        }
@@ -836,18 +2500,18 @@
      ],
      "Version": "2012-10-17"
     },
-    "PolicyName": "DemoUserProviderframeworkonEventServiceRoleDefaultPolicyA02F8702",
+    "PolicyName": "DemoUsersProviderframeworkonEventServiceRoleDefaultPolicy8755D754",
     "Roles": [
      {
-      "Ref": "DemoUserProviderframeworkonEventServiceRoleD9E1119F"
+      "Ref": "DemoUsersProviderframeworkonEventServiceRole9BAC388F"
      }
     ]
    },
    "Metadata": {
-    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUserProvider/framework-onEvent/ServiceRole/DefaultPolicy/Resource"
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUsersProvider/framework-onEvent/ServiceRole/DefaultPolicy/Resource"
    }
   },
-  "DemoUserProviderframeworkonEvent0894DB46": {
+  "DemoUsersProviderframeworkonEventA6E82994": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
@@ -856,12 +2520,12 @@
      },
      "S3Key": "07a90cc3efdfc34da22208dcd9d211f06f5b0e01b21e778edc7c3966b1f61d57.zip"
     },
-    "Description": "AWS CDK resource provider framework - onEvent (OrderProcessingFraudDetectionStack/DemoUserProvider)",
+    "Description": "AWS CDK resource provider framework - onEvent (OrderProcessingFraudDetectionStack/DemoUsersProvider)",
     "Environment": {
      "Variables": {
       "USER_ON_EVENT_FUNCTION_ARN": {
        "Fn::GetAtt": [
-        "DemoUserHandler8E6E5E67",
+        "DemoUsersHandler10B2C9BC",
         "Arn"
        ]
       }
@@ -874,7 +2538,7 @@
     },
     "Role": {
      "Fn::GetAtt": [
-      "DemoUserProviderframeworkonEventServiceRoleD9E1119F",
+      "DemoUsersProviderframeworkonEventServiceRole9BAC388F",
       "Arn"
      ]
     },
@@ -882,36 +2546,310 @@
     "Timeout": 900
    },
    "DependsOn": [
-    "DemoUserProviderframeworkonEventServiceRoleDefaultPolicyA02F8702",
-    "DemoUserProviderframeworkonEventServiceRoleD9E1119F"
+    "DemoUsersProviderframeworkonEventServiceRoleDefaultPolicy8755D754",
+    "DemoUsersProviderframeworkonEventServiceRole9BAC388F"
    ],
    "Metadata": {
-    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUserProvider/framework-onEvent/Resource",
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUsersProvider/framework-onEvent/Resource",
     "aws:asset:path": "asset.07a90cc3efdfc34da22208dcd9d211f06f5b0e01b21e778edc7c3966b1f61d57",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
   },
-  "DemoUser": {
+  "DemoUsers": {
    "Type": "AWS::CloudFormation::CustomResource",
    "Properties": {
     "ServiceToken": {
      "Fn::GetAtt": [
-      "DemoUserProviderframeworkonEvent0894DB46",
+      "DemoUsersProviderframeworkonEventA6E82994",
       "Arn"
      ]
     },
     "UserPoolId": {
      "Ref": "UserPool6BA7E5F2"
     },
-    "Username": "testuser",
-    "Password": "YourSecurePassw0rd!",
-    "Email": "testuser@example.com"
+    "Users": [
+     {
+      "Username": "testuser@example.com",
+      "Email": "testuser@example.com",
+      "Password": "YourSecurePassw0rd!",
+      "Group": "customers"
+     },
+     {
+      "Username": "admin@example.com",
+      "Email": "admin@example.com",
+      "Password": "AdminPassw0rd!",
+      "Group": "admins"
+     }
+    ]
    },
    "UpdateReplacePolicy": "Delete",
    "DeletionPolicy": "Delete",
    "Metadata": {
-    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUser/Default"
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/DemoUsers/Default"
+   }
+  },
+  "SeedProductsHandlerServiceRole00588E50": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/SeedProductsHandler/ServiceRole/Resource"
+   }
+  },
+  "SeedProductsHandlerServiceRoleDefaultPolicy25D6091A": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "SeedProductsHandlerServiceRoleDefaultPolicy25D6091A",
+    "Roles": [
+     {
+      "Ref": "SeedProductsHandlerServiceRole00588E50"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/SeedProductsHandler/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "SeedProductsHandler7498E7AB": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "ZipFile": "\nimport json\nimport os\nimport time\nfrom decimal import Decimal\n\nimport boto3\n\nddb = boto3.resource(\"dynamodb\")\n\n\ndef handler(event, context):\n    props = event[\"ResourceProperties\"]\n    table_name = props[\"TableName\"]\n    products_json = props[\"ProductsJson\"]\n    physical_id = f\"seed-products-{table_name}\"\n\n    if event[\"RequestType\"] == \"Delete\":\n        return {\"PhysicalResourceId\": physical_id}\n\n    table = ddb.Table(table_name)\n    products = json.loads(products_json)\n    now = int(time.time() * 1000)\n    for p in products:\n        item = {\n            \"sku\": p[\"sku\"],\n            \"name\": p[\"name\"],\n            \"description\": p[\"description\"],\n            \"category\": p[\"category\"],\n            \"price\": Decimal(str(p[\"price\"])),\n            \"currency\": p.get(\"currency\", \"USD\"),\n            \"stock\": int(p[\"stock\"]),\n            \"imageUrl\": p[\"imageUrl\"],\n            \"active\": True,\n            \"createdAt\": now,\n            \"updatedAt\": now,\n        }\n        table.put_item(Item=item)\n\n    return {\"PhysicalResourceId\": physical_id}\n"
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "SeedProductsHandlerServiceRole00588E50",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 60
+   },
+   "DependsOn": [
+    "SeedProductsHandlerServiceRoleDefaultPolicy25D6091A",
+    "SeedProductsHandlerServiceRole00588E50"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/SeedProductsHandler/Resource"
+   }
+  },
+  "SeedProductsProviderframeworkonEventServiceRole01B09F5A": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/SeedProductsProvider/framework-onEvent/ServiceRole/Resource"
+   }
+  },
+  "SeedProductsProviderframeworkonEventServiceRoleDefaultPolicy6A24D0FE": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "SeedProductsHandler7498E7AB",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "SeedProductsHandler7498E7AB",
+             "Arn"
+            ]
+           },
+           ":*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": "lambda:GetFunction",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "SeedProductsHandler7498E7AB",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "SeedProductsProviderframeworkonEventServiceRoleDefaultPolicy6A24D0FE",
+    "Roles": [
+     {
+      "Ref": "SeedProductsProviderframeworkonEventServiceRole01B09F5A"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/SeedProductsProvider/framework-onEvent/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "SeedProductsProviderframeworkonEventA6D7A7F5": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "07a90cc3efdfc34da22208dcd9d211f06f5b0e01b21e778edc7c3966b1f61d57.zip"
+    },
+    "Description": "AWS CDK resource provider framework - onEvent (OrderProcessingFraudDetectionStack/SeedProductsProvider)",
+    "Environment": {
+     "Variables": {
+      "USER_ON_EVENT_FUNCTION_ARN": {
+       "Fn::GetAtt": [
+        "SeedProductsHandler7498E7AB",
+        "Arn"
+       ]
+      }
+     }
+    },
+    "Handler": "framework.onEvent",
+    "LoggingConfig": {
+     "ApplicationLogLevel": "FATAL",
+     "LogFormat": "JSON"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "SeedProductsProviderframeworkonEventServiceRole01B09F5A",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Timeout": 900
+   },
+   "DependsOn": [
+    "SeedProductsProviderframeworkonEventServiceRoleDefaultPolicy6A24D0FE",
+    "SeedProductsProviderframeworkonEventServiceRole01B09F5A"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/SeedProductsProvider/framework-onEvent/Resource",
+    "aws:asset:path": "asset.07a90cc3efdfc34da22208dcd9d211f06f5b0e01b21e778edc7c3966b1f61d57",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "SeedProducts": {
+   "Type": "AWS::CloudFormation::CustomResource",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "SeedProductsProviderframeworkonEventA6D7A7F5",
+      "Arn"
+     ]
+    },
+    "TableName": {
+     "Ref": "ProductsTable241ADBFF"
+    },
+    "ProductsJson": "[{\"sku\":\"BOOK-1\",\"name\":\"The Cloud Pioneers\",\"description\":\"A best-selling paperback covering the rise of modern cloud computing.\",\"category\":\"books\",\"price\":19.99,\"stock\":100,\"imageUrl\":\"https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=70\"},{\"sku\":\"HEADPHONES-1\",\"name\":\"AeroSound Wireless Headphones\",\"description\":\"Comfortable over-ear headphones with 30-hour battery life.\",\"category\":\"electronics\",\"price\":89.99,\"stock\":50,\"imageUrl\":\"https://images.unsplash.com/photo-1518443895914-c5dc4f2ab57f?auto=format&fit=crop&w=800&q=70\"},{\"sku\":\"MOUSE-1\",\"name\":\"Glide Pro Wireless Mouse\",\"description\":\"Ergonomic mouse with silent clicks and USB-C charging.\",\"category\":\"electronics\",\"price\":39.99,\"stock\":80,\"imageUrl\":\"https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=70\"},{\"sku\":\"KEYBOARD-1\",\"name\":\"Mechanical Keyboard K87\",\"description\":\"Tenkeyless mechanical keyboard with RGB and hot-swappable switches.\",\"category\":\"electronics\",\"price\":119.99,\"stock\":40,\"imageUrl\":\"https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=70\"},{\"sku\":\"WATCH-1\",\"name\":\"Pulse Smartwatch\",\"description\":\"Health and fitness tracker with GPS, heart rate, and sleep monitoring.\",\"category\":\"wearables\",\"price\":199.99,\"stock\":25,\"imageUrl\":\"https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=70\"},{\"sku\":\"TABLET-1\",\"name\":\"FlexPad 10 Tablet\",\"description\":\"10-inch HD tablet, perfect for reading, video, and notes.\",\"category\":\"electronics\",\"price\":299.99,\"stock\":20,\"imageUrl\":\"https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=800&q=70\"},{\"sku\":\"PHONE-1\",\"name\":\"Nimbus 5G Smartphone\",\"description\":\"Flagship smartphone with triple-lens camera and 256GB storage.\",\"category\":\"electronics\",\"price\":699.99,\"stock\":30,\"imageUrl\":\"https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=70\"},{\"sku\":\"MONITOR-1\",\"name\":\"UltraView 27-inch 4K Monitor\",\"description\":\"27-inch IPS monitor with 4K resolution and USB-C input.\",\"category\":\"electronics\",\"price\":449.99,\"stock\":15,\"imageUrl\":\"https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=800&q=70\"},{\"sku\":\"CAMERA-1\",\"name\":\"Voyager Mirrorless Camera\",\"description\":\"24MP mirrorless camera with interchangeable lens and 4K video.\",\"category\":\"electronics\",\"price\":899.99,\"stock\":12,\"imageUrl\":\"https://images.unsplash.com/photo-1519183071298-a2962be96e63?auto=format&fit=crop&w=800&q=70\"},{\"sku\":\"LAPTOP-1\",\"name\":\"Stratus 14 Laptop\",\"description\":\"Slim 14-inch laptop with 16GB RAM, 512GB SSD, and all-day battery.\",\"category\":\"electronics\",\"price\":1199.99,\"stock\":10,\"imageUrl\":\"https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=70\"}]"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/SeedProducts/Default"
    }
   },
   "OrdersApi48294D44": {
@@ -978,7 +2916,7 @@
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Account"
    }
   },
-  "OrdersApiDeployment7E959249f978d42dedf489c6dbb51db1d612bc16": {
+  "OrdersApiDeployment7E9592494d5f3fb4aa814dd526c9265063d5c83e": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "Automatically created by the RestApi construct",
@@ -987,10 +2925,53 @@
     }
    },
    "DependsOn": [
+    "OrdersApiadminOPTIONS5423FC6B",
+    "OrdersApiadminordersorderIddecisionOPTIONSAE00EB1D",
+    "OrdersApiadminordersorderIddecisionPOST8E0AE6F1",
+    "OrdersApiadminordersorderIddecisionE0DFADAF",
+    "OrdersApiadminordersorderIdOPTIONS963A2061",
+    "OrdersApiadminordersorderId20AF4DD7",
+    "OrdersApiadminordersGETDD9CEEC2",
+    "OrdersApiadminordersOPTIONS409D79A6",
+    "OrdersApiadminordersC5F1146F",
+    "OrdersApiadmin88F01F47",
+    "OrdersApicartDELETEA5634C01",
+    "OrdersApicartGETAAA4E34B",
+    "OrdersApicartitemsskuDELETE30BD94DC",
+    "OrdersApicartitemsskuOPTIONS3A3D33BE",
+    "OrdersApicartitemsskuPUT201AE77E",
+    "OrdersApicartitemsskuF0E3A835",
+    "OrdersApicartitemsOPTIONSD69D8549",
+    "OrdersApicartitemsPOSTF2323D1B",
+    "OrdersApicartitemsCBB18D76",
+    "OrdersApicartOPTIONS8C3E6A75",
+    "OrdersApicart04FC8D15",
+    "OrdersApimeOPTIONS720E018D",
+    "OrdersApimeordersorderIdGETE8299222",
+    "OrdersApimeordersorderIdOPTIONS4578D6DB",
+    "OrdersApimeordersorderId972631FD",
+    "OrdersApimeordersGET9870445A",
+    "OrdersApimeordersOPTIONS169BC1FA",
+    "OrdersApimeordersB7679A98",
+    "OrdersApime1C7D5A4B",
     "OrdersApiOPTIONS3B3E4330",
     "OrdersApiordersOPTIONSEF8B4CF0",
     "OrdersApiordersPOSTAD0E8A63",
-    "OrdersApiordersDBA2FB62"
+    "OrdersApiordersDBA2FB62",
+    "OrdersApiproductsskuDELETE14CA0CBE",
+    "OrdersApiproductsskuGET4014B998",
+    "OrdersApiproductsskuOPTIONS7EE141EC",
+    "OrdersApiproductsskuPUT1EE5F635",
+    "OrdersApiproductssku12087BE0",
+    "OrdersApiproductsGETCCDC25D7",
+    "OrdersApiproductsOPTIONSB61627B2",
+    "OrdersApiproductsPOST6B030E2B",
+    "OrdersApiproductsC1433B0B",
+    "OrdersApiuploadsOPTIONSF2456CBB",
+    "OrdersApiuploadsproductimageOPTIONS57ECF1CC",
+    "OrdersApiuploadsproductimagePOSTAB874967",
+    "OrdersApiuploadsproductimage66AF7179",
+    "OrdersApiuploadsDAE59ED9"
    ],
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Deployment/Resource",
@@ -1001,7 +2982,7 @@
    "Type": "AWS::ApiGateway::Stage",
    "Properties": {
     "DeploymentId": {
-     "Ref": "OrdersApiDeployment7E959249f978d42dedf489c6dbb51db1d612bc16"
+     "Ref": "OrdersApiDeployment7E9592494d5f3fb4aa814dd526c9265063d5c83e"
     },
     "RestApiId": {
      "Ref": "OrdersApi48294D44"
@@ -1028,7 +3009,7 @@
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
         "method.response.header.Access-Control-Allow-Origin": "'*'",
-        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
        },
        "StatusCode": "204"
       }
@@ -1062,6 +3043,769 @@
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/OPTIONS/Resource"
    }
   },
+  "OrdersApiproductsC1433B0B": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "OrdersApi48294D44",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "products",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/Resource"
+   }
+  },
+  "OrdersApiproductsOPTIONSB61627B2": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApiproductsC1433B0B"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/OPTIONS/Resource"
+   }
+  },
+  "OrdersApiproductsGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETproductsCFDDA53B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/GET/products"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..products"
+   }
+  },
+  "OrdersApiproductsGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETproductsD9CA56F3": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/GET/products"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..products"
+   }
+  },
+  "OrdersApiproductsGETCCDC25D7": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProductsLambda1FF938FD",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApiproductsC1433B0B"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/GET/Resource"
+   }
+  },
+  "OrdersApiproductsPOSTApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTproducts44ED32B0": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/POST/products"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/POST/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..products"
+   }
+  },
+  "OrdersApiproductsPOSTApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTproductsCAAF67F2": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/POST/products"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/POST/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..products"
+   }
+  },
+  "OrdersApiproductsPOST6B030E2B": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProductsLambda1FF938FD",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApiproductsC1433B0B"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/POST/Resource"
+   }
+  },
+  "OrdersApiproductssku12087BE0": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApiproductsC1433B0B"
+    },
+    "PathPart": "{sku}",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/Resource"
+   }
+  },
+  "OrdersApiproductsskuOPTIONS7EE141EC": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApiproductssku12087BE0"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/OPTIONS/Resource"
+   }
+  },
+  "OrdersApiproductsskuGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETproductssku6A5D06D8": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/GET/products/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..products.{sku}"
+   }
+  },
+  "OrdersApiproductsskuGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETproductsskuF36C088D": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/GET/products/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..products.{sku}"
+   }
+  },
+  "OrdersApiproductsskuGET4014B998": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProductsLambda1FF938FD",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApiproductssku12087BE0"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/GET/Resource"
+   }
+  },
+  "OrdersApiproductsskuPUTApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPUTproductsskuB7DE8A4A": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/PUT/products/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/PUT/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.PUT..products.{sku}"
+   }
+  },
+  "OrdersApiproductsskuPUTApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPUTproductssku949CB68B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/PUT/products/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/PUT/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.PUT..products.{sku}"
+   }
+  },
+  "OrdersApiproductsskuPUT1EE5F635": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "PUT",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProductsLambda1FF938FD",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApiproductssku12087BE0"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/PUT/Resource"
+   }
+  },
+  "OrdersApiproductsskuDELETEApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDDELETEproductssku77A679A1": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/DELETE/products/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/DELETE/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.DELETE..products.{sku}"
+   }
+  },
+  "OrdersApiproductsskuDELETEApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDDELETEproductssku2C4AC1F1": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProductsLambda1FF938FD",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/DELETE/products/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/DELETE/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.DELETE..products.{sku}"
+   }
+  },
+  "OrdersApiproductsskuDELETE14CA0CBE": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "DELETE",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProductsLambda1FF938FD",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApiproductssku12087BE0"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/products/{sku}/DELETE/Resource"
+   }
+  },
   "OrdersApiordersDBA2FB62": {
    "Type": "AWS::ApiGateway::Resource",
    "Properties": {
@@ -1092,7 +3836,7 @@
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
         "method.response.header.Access-Control-Allow-Origin": "'*'",
-        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
        },
        "StatusCode": "204"
       }
@@ -1253,6 +3997,2014 @@
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/orders/POST/Resource"
    }
   },
+  "OrdersApime1C7D5A4B": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "OrdersApi48294D44",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "me",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/Resource"
+   }
+  },
+  "OrdersApimeOPTIONS720E018D": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApime1C7D5A4B"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/OPTIONS/Resource"
+   }
+  },
+  "OrdersApimeordersB7679A98": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApime1C7D5A4B"
+    },
+    "PathPart": "orders",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/Resource"
+   }
+  },
+  "OrdersApimeordersOPTIONS169BC1FA": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApimeordersB7679A98"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/OPTIONS/Resource"
+   }
+  },
+  "OrdersApimeordersGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETmeorders100B554E": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "MyOrdersLambda6EF2C9AB",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/GET/me/orders"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..me.orders"
+   }
+  },
+  "OrdersApimeordersGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETmeorders1CCD54EC": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "MyOrdersLambda6EF2C9AB",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/GET/me/orders"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..me.orders"
+   }
+  },
+  "OrdersApimeordersGET9870445A": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "MyOrdersLambda6EF2C9AB",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApimeordersB7679A98"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/GET/Resource"
+   }
+  },
+  "OrdersApimeordersorderId972631FD": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApimeordersB7679A98"
+    },
+    "PathPart": "{orderId}",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/{orderId}/Resource"
+   }
+  },
+  "OrdersApimeordersorderIdOPTIONS4578D6DB": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApimeordersorderId972631FD"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/{orderId}/OPTIONS/Resource"
+   }
+  },
+  "OrdersApimeordersorderIdGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETmeordersorderId7D975A97": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "MyOrdersLambda6EF2C9AB",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/GET/me/orders/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/{orderId}/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..me.orders.{orderId}"
+   }
+  },
+  "OrdersApimeordersorderIdGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETmeordersorderIdB1B67B29": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "MyOrdersLambda6EF2C9AB",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/GET/me/orders/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/{orderId}/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..me.orders.{orderId}"
+   }
+  },
+  "OrdersApimeordersorderIdGETE8299222": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "MyOrdersLambda6EF2C9AB",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApimeordersorderId972631FD"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/me/orders/{orderId}/GET/Resource"
+   }
+  },
+  "OrdersApicart04FC8D15": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "OrdersApi48294D44",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "cart",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/Resource"
+   }
+  },
+  "OrdersApicartOPTIONS8C3E6A75": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApicart04FC8D15"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/OPTIONS/Resource"
+   }
+  },
+  "OrdersApicartGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETcartCCF8204C": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/GET/cart"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..cart"
+   }
+  },
+  "OrdersApicartGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETcart4F0A9E9E": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/GET/cart"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..cart"
+   }
+  },
+  "OrdersApicartGETAAA4E34B": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "CartLambdaD2687422",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApicart04FC8D15"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/GET/Resource"
+   }
+  },
+  "OrdersApicartDELETEApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDDELETEcart51B3A8CA": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/DELETE/cart"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/DELETE/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.DELETE..cart"
+   }
+  },
+  "OrdersApicartDELETEApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDDELETEcart9C45B391": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/DELETE/cart"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/DELETE/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.DELETE..cart"
+   }
+  },
+  "OrdersApicartDELETEA5634C01": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "DELETE",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "CartLambdaD2687422",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApicart04FC8D15"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/DELETE/Resource"
+   }
+  },
+  "OrdersApicartitemsCBB18D76": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApicart04FC8D15"
+    },
+    "PathPart": "items",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/Resource"
+   }
+  },
+  "OrdersApicartitemsOPTIONSD69D8549": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApicartitemsCBB18D76"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/OPTIONS/Resource"
+   }
+  },
+  "OrdersApicartitemsPOSTApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTcartitems33BDCF77": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/POST/cart/items"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/POST/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..cart.items"
+   }
+  },
+  "OrdersApicartitemsPOSTApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTcartitemsE6242B11": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/POST/cart/items"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/POST/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..cart.items"
+   }
+  },
+  "OrdersApicartitemsPOSTF2323D1B": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "CartLambdaD2687422",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApicartitemsCBB18D76"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/POST/Resource"
+   }
+  },
+  "OrdersApicartitemsskuF0E3A835": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApicartitemsCBB18D76"
+    },
+    "PathPart": "{sku}",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/{sku}/Resource"
+   }
+  },
+  "OrdersApicartitemsskuOPTIONS3A3D33BE": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApicartitemsskuF0E3A835"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/{sku}/OPTIONS/Resource"
+   }
+  },
+  "OrdersApicartitemsskuPUTApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPUTcartitemssku7631C1B3": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/PUT/cart/items/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/{sku}/PUT/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.PUT..cart.items.{sku}"
+   }
+  },
+  "OrdersApicartitemsskuPUTApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPUTcartitemssku20FC5F34": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/PUT/cart/items/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/{sku}/PUT/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.PUT..cart.items.{sku}"
+   }
+  },
+  "OrdersApicartitemsskuPUT201AE77E": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "PUT",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "CartLambdaD2687422",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApicartitemsskuF0E3A835"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/{sku}/PUT/Resource"
+   }
+  },
+  "OrdersApicartitemsskuDELETEApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDDELETEcartitemssku1D41BA46": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/DELETE/cart/items/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/{sku}/DELETE/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.DELETE..cart.items.{sku}"
+   }
+  },
+  "OrdersApicartitemsskuDELETEApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDDELETEcartitemsskuE9DE6AFE": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "CartLambdaD2687422",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/DELETE/cart/items/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/{sku}/DELETE/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.DELETE..cart.items.{sku}"
+   }
+  },
+  "OrdersApicartitemsskuDELETE30BD94DC": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "DELETE",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "CartLambdaD2687422",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApicartitemsskuF0E3A835"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/cart/items/{sku}/DELETE/Resource"
+   }
+  },
+  "OrdersApiadmin88F01F47": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "OrdersApi48294D44",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "admin",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/Resource"
+   }
+  },
+  "OrdersApiadminOPTIONS5423FC6B": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApiadmin88F01F47"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/OPTIONS/Resource"
+   }
+  },
+  "OrdersApiadminordersC5F1146F": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApiadmin88F01F47"
+    },
+    "PathPart": "orders",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/Resource"
+   }
+  },
+  "OrdersApiadminordersOPTIONS409D79A6": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApiadminordersC5F1146F"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/OPTIONS/Resource"
+   }
+  },
+  "OrdersApiadminordersGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminorders15E1BABA": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "AdminLambda7A0A34D4",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/GET/admin/orders"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.orders"
+   }
+  },
+  "OrdersApiadminordersGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminordersCF8FF363": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "AdminLambda7A0A34D4",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/GET/admin/orders"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.orders"
+   }
+  },
+  "OrdersApiadminordersGETDD9CEEC2": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "AdminLambda7A0A34D4",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApiadminordersC5F1146F"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/GET/Resource"
+   }
+  },
+  "OrdersApiadminordersorderId20AF4DD7": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApiadminordersC5F1146F"
+    },
+    "PathPart": "{orderId}",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/Resource"
+   }
+  },
+  "OrdersApiadminordersorderIdOPTIONS963A2061": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApiadminordersorderId20AF4DD7"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/OPTIONS/Resource"
+   }
+  },
+  "OrdersApiadminordersorderIddecisionE0DFADAF": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApiadminordersorderId20AF4DD7"
+    },
+    "PathPart": "decision",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/decision/Resource"
+   }
+  },
+  "OrdersApiadminordersorderIddecisionOPTIONSAE00EB1D": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApiadminordersorderIddecisionE0DFADAF"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/decision/OPTIONS/Resource"
+   }
+  },
+  "OrdersApiadminordersorderIddecisionPOSTApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTadminordersorderIddecision143A3E42": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "AdminLambda7A0A34D4",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/POST/admin/orders/*/decision"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/decision/POST/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..admin.orders.{orderId}.decision"
+   }
+  },
+  "OrdersApiadminordersorderIddecisionPOSTApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTadminordersorderIddecision5448708C": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "AdminLambda7A0A34D4",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/POST/admin/orders/*/decision"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/decision/POST/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..admin.orders.{orderId}.decision"
+   }
+  },
+  "OrdersApiadminordersorderIddecisionPOST8E0AE6F1": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "AdminLambda7A0A34D4",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApiadminordersorderIddecisionE0DFADAF"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/decision/POST/Resource"
+   }
+  },
+  "OrdersApiuploadsDAE59ED9": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "OrdersApi48294D44",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "uploads",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/Resource"
+   }
+  },
+  "OrdersApiuploadsOPTIONSF2456CBB": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApiuploadsDAE59ED9"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/OPTIONS/Resource"
+   }
+  },
+  "OrdersApiuploadsproductimage66AF7179": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApiuploadsDAE59ED9"
+    },
+    "PathPart": "product-image",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/product-image/Resource"
+   }
+  },
+  "OrdersApiuploadsproductimageOPTIONS57ECF1CC": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApiuploadsproductimage66AF7179"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/product-image/OPTIONS/Resource"
+   }
+  },
+  "OrdersApiuploadsproductimagePOSTApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTuploadsproductimageB01F200B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "UploadLambdaF57B15C3",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/POST/uploads/product-image"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/product-image/POST/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..uploads.product-image"
+   }
+  },
+  "OrdersApiuploadsproductimagePOSTApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTuploadsproductimage587A61F5": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "UploadLambdaF57B15C3",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/POST/uploads/product-image"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/product-image/POST/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..uploads.product-image"
+   }
+  },
+  "OrdersApiuploadsproductimagePOSTAB874967": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "UploadLambdaF57B15C3",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApiuploadsproductimage66AF7179"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/product-image/POST/Resource"
+   }
+  },
   "CognitoAuthorizerF3215DBC": {
    "Type": "AWS::ApiGateway::Authorizer",
    "Properties": {
@@ -1278,7 +6030,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22Sz04jMQzGn2XvqUFFPEALLJddUQ3suUozZjCdiUex06ob5d1RMtPSA6fv53zxvyhLWN7fwu0ve5SFa/eLnnaQXtW6vbFH2ab25O3A7Q7Sm931aB7efYVs8IBeBdJT0XWUYl24idPdotmIF0hvPJKr+QWy6e2way2k39E7JfbFuuYNhoFEiH02ZAdIDc81i264J3eq9yplI3dbK4IqsCpi5A7W0e1R11bQ9NwJpD/cPQeOY8k7czaOO0/KkP4Jhg1zX+wLn+GhJ/R6bU0n2diROqt4tCdIDYquRqpzfuPKOY5ezSOOPZ+Guc5V9Kq2q8tN0KBwDA7r6H9RP7gt5kxnd24y87TEeTZZRf3gQP8x1AEuUc7f+fWhSkfynXFRlIdtmE2BTeADtSW/Oj93ffcvUceo2XhuET7l5rC8h/KjPoVoEaJXGhCaSb8AkQtstG4CAAA="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/5WTQW/bMAyFf8tyVrQiRS+7OW23y4YGTncahkCWOVeJLRoilSwV9N8HWXbiorv0xE961NMTAa3k6u5G3nxSJ1rq+rBsTSXDlpU+CHWiXajPVnVYVzI8q6oFcf/HDhAFHMEyyfCY6tpTki5c+tybahRkSYZn7I0ezieIgm5lWHt9AE6bmX6FRWf+Grv4spgHSknoVg4SydxaeMYHaIHhqdqDZlrE3yJLG2yNPl9d8/oD3vnAlhVDlx55tV4rgiha1VW1kuGrt5oN2nTVnDfgOkNk0EZhVCdDieM4Ur3Gy5RGsVNEwCSLVESLDcnwHZtvDn2fOieOQmNjDaMMPwncBrFN8oUnuG8NWJ5L73dGQ9WbRjGc1FmGEoiL3gxRr1hojd6yeIC+xXM32sxWW1bN8L4MJRB6pyENS/wAfsE6iSNN6njJyPlVUzQqPL+gM6/ghgCXVYyz854Yu//bvZE2Do+mBjfkGSacchrbCD307dzYSHJqTW5PnnvPUVisQe7p83F1J9NX2ZMxS+ctmw5kmes/hpxMWEcDAAA="
    },
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/CDKMetadata/Default"
@@ -1348,6 +6100,11 @@
     "Ref": "UserPoolUserPoolClient40176907"
    }
   },
+  "AwsRegion": {
+   "Value": {
+    "Ref": "AWS::Region"
+   }
+  },
   "OrdersEventBusName": {
    "Value": {
     "Ref": "OrdersBus68D47F66"
@@ -1356,6 +6113,21 @@
   "OrdersTableName": {
    "Value": {
     "Ref": "OrdersTable315BB997"
+   }
+  },
+  "ProductsTableName": {
+   "Value": {
+    "Ref": "ProductsTable241ADBFF"
+   }
+  },
+  "CartsTableName": {
+   "Value": {
+    "Ref": "CartsTableF57A4C06"
+   }
+  },
+  "ProductImagesBucketName": {
+   "Value": {
+    "Ref": "ProductImagesBucket03BDA4C8"
    }
   },
   "OrderLambdaName": {

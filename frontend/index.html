@@ -2,92 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" href="data:," />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Order Processing Fraud Detection</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <title>NimbusMart — Cloud E-Commerce Demo</title>
   </head>
   <body>
-    <main class="page">
-      <section class="card">
-        <p class="eyebrow">Intelligent Event-Driven Pipeline</p>
-        <h1>Order Submission Console</h1>
-        <p class="subtitle">
-          Enter order details and submit once. The app signs in to Cognito,
-          calls Order Lambda, stores the order in DynamoDB, and triggers fraud scoring.
-        </p>
-
-        <form id="orderForm" class="form">
-          <h2>Order Details</h2>
-
-          <div class="grid">
-            <div>
-              <label for="currency">Currency</label>
-              <select id="currency" name="currency" required>
-                <option value="USD" selected>USD</option>
-                <option value="CAD">CAD</option>
-                <option value="GBP">GBP</option>
-                <option value="INR">INR</option>
-              </select>
-            </div>
-            <div>
-              <label for="shippingCountry">Shipping Country</label>
-              <select
-                id="shippingCountry"
-                name="shippingCountry"
-                required
-              >
-                <option value="US" selected>US - lower risk</option>
-                <option value="CA">CA - lower risk</option>
-                <option value="GB">GB - higher risk</option>
-                <option value="IN">IN - higher risk</option>
-                <option value="AU">AU - higher risk</option>
-                <option value="JP">JP - higher risk</option>
-              </select>
-            </div>
-          </div>
-
-          <label for="shippingPostal">Shipping Postal Code</label>
-          <input
-            id="shippingPostal"
-            name="shippingPostal"
-            type="text"
-            value="95112"
-            required
-          />
-
-          <h2>Order Items</h2>
-          <div id="itemsContainer" class="items"></div>
-          <button type="button" id="addItemBtn" class="secondary-btn">+ Add Item</button>
-
-          <button type="submit" class="primary-btn" id="submitBtn">
-            Submit Order and Run Fraud Check
-          </button>
-        </form>
-      </section>
-
-      <section class="card output-card">
-        <h2>Response</h2>
-        <p class="subtitle">Final order response and fraud-check hints appear here.</p>
-        <pre id="output">{ "status": "ready" }</pre>
-      </section>
-    </main>
-
-    <template id="itemRowTemplate">
-      <div class="item-row">
-        <input type="text" name="sku" placeholder="SKU (e.g. GADGET-1)" required />
-        <input type="number" name="qty" min="1" step="1" value="1" required />
-        <input
-          type="number"
-          name="unitPrice"
-          min="0"
-          step="0.01"
-          value="199.99"
-          required
-        />
-        <button type="button" class="danger-btn remove-item-btn">Remove</button>
-      </div>
-    </template>
-
-    <script src="./app.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
