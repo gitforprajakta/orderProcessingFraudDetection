@@ -11,6 +11,9 @@ export default function AdminLayout() {
         <NavLink to="/admin/orders" className="tab">
           Orders
         </NavLink>
+        <NavLink to="/admin/review-queue" className="tab">
+          Review Queue
+        </NavLink>
       </nav>
       <Outlet />
     </div>

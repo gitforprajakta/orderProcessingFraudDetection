@@ -95,6 +95,30 @@
       "data": "OrderNotificationsTopicArn"
     }
   ],
+  "/OrderProcessingFraudDetectionStack/ReviewQueueUrl": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReviewQueueUrl"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/ReviewQueueArn": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReviewQueueArn"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/ReviewQueueDlqUrl": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReviewQueueDlqUrl"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/AdminEmailsSubscribed": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "AdminEmailsSubscribed"
+    }
+  ],
   "/OrderProcessingFraudDetectionStack/BootstrapVersion": [
     {
       "type": "aws:cdk:logicalId",
@@ -135,6 +159,18 @@
     {
       "type": "aws:cdk:logicalId",
       "data": "OrderNotificationsTopic7E297289"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/ReviewQueueDLQ/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReviewQueueDLQ91DCF7B1"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/ReviewQueue/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReviewQueueD8FD0AEF"
     }
   ],
   "/OrderProcessingFraudDetectionStack/ProductImagesBucket/Resource": [
@@ -293,6 +329,12 @@
       "data": "OnFraudDecisionAllowEventRuleOrderProcessingFraudDetectionStackNotificationLambda7327E3EECBA42948"
     }
   ],
+  "/OrderProcessingFraudDetectionStack/OnOrderReviewToQueue/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OnOrderReviewToQueueE6870EC8"
+    }
+  ],
   "/OrderProcessingFraudDetectionStack/OnOrderBlockedRestoreStock/Resource": [
     {
       "type": "aws:cdk:logicalId",
@@ -369,6 +411,36 @@
     {
       "type": "aws:cdk:logicalId",
       "data": "CDKMetadataAvailable"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderNotificationsTopic/saikaran.akula@sjsu.edu/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderNotificationsTopicsaikaranakulasjsuedu91BEB590"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderNotificationsTopic/srikavya.gelli@sjsu.edu/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderNotificationsTopicsrikavyagellisjsuedu7D94CEB3"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderNotificationsTopic/prajaktajivanrao.ketkar@sjsu.edu/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderNotificationsTopicprajaktajivanraoketkarsjsueduDEA2845B"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/ReviewQueueDLQ/Policy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReviewQueueDLQPolicy258B9384"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/ReviewQueue/Policy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ReviewQueuePolicy255A7916"
     }
   ],
   "/OrderProcessingFraudDetectionStack/ProductImagesBucket/Policy/Resource": [
@@ -482,7 +554,7 @@
   "/OrderProcessingFraudDetectionStack/OrdersApi/Deployment/Resource": [
     {
       "type": "aws:cdk:logicalId",
-      "data": "OrdersApiDeployment7E9592494d5f3fb4aa814dd526c9265063d5c83e"
+      "data": "OrdersApiDeployment7E959249338863afef6c53942b845f073479cc2d"
     }
   ],
   "/OrderProcessingFraudDetectionStack/OrdersApi/DeploymentStage.prod/Resource": [
@@ -767,6 +839,12 @@
       "data": "OrdersApiadminordersC5F1146F"
     }
   ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminreviewqueueDBEF0FE5"
+    }
+  ],
   "/OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/OPTIONS/Resource": [
     {
       "type": "aws:cdk:logicalId",
@@ -927,6 +1005,30 @@
     {
       "type": "aws:cdk:logicalId",
       "data": "OrdersApiadminordersorderId20AF4DD7"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminreviewqueueOPTIONS683331E3"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.review-queue": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminreviewqueueGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminreviewqueue396F4EBB"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.review-queue": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminreviewqueueGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminreviewqueue38964264"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/GET/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminreviewqueueGETC56EB678"
     }
   ],
   "/OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/product-image/OPTIONS/Resource": [

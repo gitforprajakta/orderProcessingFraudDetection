@@ -8,6 +8,8 @@ import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as sns from "aws-cdk-lib/aws-sns";
+import * as snsSubs from "aws-cdk-lib/aws-sns-subscriptions";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as cr from "aws-cdk-lib/custom-resources";
 import * as iam from "aws-cdk-lib/aws-iam";
@@ -59,6 +61,52 @@ export class PlatformStack extends cdk.Stack {
 
     const topic = new sns.Topic(this, "OrderNotificationsTopic", {
       topicName: "OrderNotificationsTopic",
+    });
+
+    // Auto-subscribe up to N admin emails at deploy time so the three
+    // reviewers always get APPROVE / BLOCK / REVIEW notifications.
+    // Pass via CDK context, e.g.:
+    //   npx cdk deploy -c adminEmails="alice@x.com,bob@x.com,carol@x.com"
+    const adminEmailsCtx = (this.node.tryGetContext("adminEmails") ||
+      "") as string;
+    // Basic RFC-ish check: reject empty, whitespace-containing, or
+    // obviously-malformed addresses now so deploys don't fail half way
+    // with an opaque "Invalid parameter: Email address" error from SNS.
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const adminEmails = adminEmailsCtx
+      .split(",")
+      .map((e) => e.trim())
+      .filter((e) => e.length > 0);
+    const invalidEmails = adminEmails.filter((e) => !emailRegex.test(e));
+    if (invalidEmails.length > 0) {
+      throw new Error(
+        `Invalid email(s) in -c adminEmails="...": ${JSON.stringify(
+          invalidEmails
+        )}. Each address must contain no spaces and look like name@domain.tld.`
+      );
+    }
+    adminEmails.forEach((email) => {
+      topic.addSubscription(new snsSubs.EmailSubscription(email));
+    });
+
+    // -----------------------------------------------------------------------
+    // SQS: ReviewQueue
+    // OrderReview events are also routed to this queue so the three admins
+    // can pull pending review requests, approve/block them, and have the
+    // message removed from the queue once a decision is recorded.
+    // -----------------------------------------------------------------------
+    const reviewDlq = new sqs.Queue(this, "ReviewQueueDLQ", {
+      queueName: "OrderReviewQueue-DLQ",
+      retentionPeriod: cdk.Duration.days(14),
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const reviewQueue = new sqs.Queue(this, "ReviewQueue", {
+      queueName: "OrderReviewQueue",
+      visibilityTimeout: cdk.Duration.seconds(60),
+      retentionPeriod: cdk.Duration.days(4),
+      deadLetterQueue: { queue: reviewDlq, maxReceiveCount: 5 },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
     // -----------------------------------------------------------------------
@@ -144,7 +192,11 @@ export class PlatformStack extends cdk.Stack {
       code: lambda.Code.fromAsset("services/notification_service"),
       handler: "handler.handler",
       timeout: cdk.Duration.seconds(10),
-      environment: { SNS_TOPIC_ARN: topic.topicArn },
+      environment: {
+        SNS_TOPIC_ARN: topic.topicArn,
+        ORDERS_TABLE_NAME: ordersTable.tableName,
+        PRODUCTS_TABLE_NAME: productsTable.tableName,
+      },
     });
 
     const productsLambda = new lambda.Function(this, "ProductsLambda", {
@@ -195,6 +247,7 @@ export class PlatformStack extends cdk.Stack {
         PRODUCTS_TABLE_NAME: productsTable.tableName,
         EVENT_BUS_NAME: bus.eventBusName,
         ADMIN_GROUP: "admins",
+        REVIEW_QUEUE_URL: reviewQueue.queueUrl,
       },
     });
 
@@ -253,6 +306,8 @@ export class PlatformStack extends cdk.Stack {
     bus.grantPutEventsTo(fraudLambda);
 
     topic.grantPublish(notificationLambda);
+    ordersTable.grantReadData(notificationLambda);
+    productsTable.grantReadData(notificationLambda);
 
     productsTable.grantReadWriteData(productsLambda);
 
@@ -264,6 +319,7 @@ export class PlatformStack extends cdk.Stack {
     ordersTable.grantReadWriteData(adminLambda);
     productsTable.grantReadWriteData(adminLambda);
     bus.grantPutEventsTo(adminLambda);
+    reviewQueue.grantConsumeMessages(adminLambda);
 
     productImagesBucket.grantPut(uploadLambda);
 
@@ -289,6 +345,21 @@ export class PlatformStack extends cdk.Stack {
         detailType: ["OrderApproved", "OrderBlocked", "OrderReview"],
       },
       targets: [new targets.LambdaFunction(notificationLambda)],
+    });
+
+    // OrderReview decisions are also pushed into the SQS ReviewQueue so the
+    // admins can pull them, approve/block, and have the message removed.
+    new events.Rule(this, "OnOrderReviewToQueue", {
+      eventBus: bus,
+      eventPattern: {
+        source: ["fraud.service"],
+        detailType: ["OrderReview"],
+      },
+      targets: [
+        new targets.SqsQueue(reviewQueue, {
+          deadLetterQueue: reviewDlq,
+        }),
+      ],
     });
 
     // Refund stock when an order is blocked (by Fraud Lambda or Admin).
@@ -687,6 +758,10 @@ def handler(event, context):
       .addResource("decision")
       .addMethod("POST", adminIntegration, authMethodOpts);
 
+    admin
+      .addResource("review-queue")
+      .addMethod("GET", adminIntegration, authMethodOpts);
+
     // ----- /uploads/product-image (admin-only, presigned PUT)
     const uploads = api.root.addResource("uploads");
     uploads
@@ -726,6 +801,12 @@ def handler(event, context):
     });
     new cdk.CfnOutput(this, "OrderNotificationsTopicArn", {
       value: topic.topicArn,
+    });
+    new cdk.CfnOutput(this, "ReviewQueueUrl", { value: reviewQueue.queueUrl });
+    new cdk.CfnOutput(this, "ReviewQueueArn", { value: reviewQueue.queueArn });
+    new cdk.CfnOutput(this, "ReviewQueueDlqUrl", { value: reviewDlq.queueUrl });
+    new cdk.CfnOutput(this, "AdminEmailsSubscribed", {
+      value: adminEmails.length ? adminEmails.join(",") : "(none configured)",
     });
   }
 }

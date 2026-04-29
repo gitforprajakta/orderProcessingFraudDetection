@@ -132,6 +132,166 @@
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderNotificationsTopic/Resource"
    }
   },
+  "OrderNotificationsTopicsaikaranakulasjsuedu91BEB590": {
+   "Type": "AWS::SNS::Subscription",
+   "Properties": {
+    "Endpoint": "saikaran.akula@sjsu.edu",
+    "Protocol": "email",
+    "TopicArn": {
+     "Ref": "OrderNotificationsTopic7E297289"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderNotificationsTopic/saikaran.akula@sjsu.edu/Resource"
+   }
+  },
+  "OrderNotificationsTopicsrikavyagellisjsuedu7D94CEB3": {
+   "Type": "AWS::SNS::Subscription",
+   "Properties": {
+    "Endpoint": "srikavya.gelli@sjsu.edu",
+    "Protocol": "email",
+    "TopicArn": {
+     "Ref": "OrderNotificationsTopic7E297289"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderNotificationsTopic/srikavya.gelli@sjsu.edu/Resource"
+   }
+  },
+  "OrderNotificationsTopicprajaktajivanraoketkarsjsueduDEA2845B": {
+   "Type": "AWS::SNS::Subscription",
+   "Properties": {
+    "Endpoint": "prajaktajivanrao.ketkar@sjsu.edu",
+    "Protocol": "email",
+    "TopicArn": {
+     "Ref": "OrderNotificationsTopic7E297289"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderNotificationsTopic/prajaktajivanrao.ketkar@sjsu.edu/Resource"
+   }
+  },
+  "ReviewQueueDLQ91DCF7B1": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 1209600,
+    "QueueName": "OrderReviewQueue-DLQ"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ReviewQueueDLQ/Resource"
+   }
+  },
+  "ReviewQueueDLQPolicy258B9384": {
+   "Type": "AWS::SQS::QueuePolicy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sqs:SendMessage",
+       "Condition": {
+        "ArnEquals": {
+         "aws:SourceArn": {
+          "Fn::GetAtt": [
+           "OnOrderReviewToQueueE6870EC8",
+           "Arn"
+          ]
+         }
+        }
+       },
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "events.amazonaws.com"
+       },
+       "Resource": {
+        "Fn::GetAtt": [
+         "ReviewQueueDLQ91DCF7B1",
+         "Arn"
+        ]
+       },
+       "Sid": "AllowEventRuleOrderProcessingFraudDetectionStackOnOrderReviewToQueueB588D5FB"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Queues": [
+     {
+      "Ref": "ReviewQueueDLQ91DCF7B1"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ReviewQueueDLQ/Policy/Resource"
+   }
+  },
+  "ReviewQueueD8FD0AEF": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "MessageRetentionPeriod": 345600,
+    "QueueName": "OrderReviewQueue",
+    "RedrivePolicy": {
+     "deadLetterTargetArn": {
+      "Fn::GetAtt": [
+       "ReviewQueueDLQ91DCF7B1",
+       "Arn"
+      ]
+     },
+     "maxReceiveCount": 5
+    },
+    "VisibilityTimeout": 60
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ReviewQueue/Resource"
+   }
+  },
+  "ReviewQueuePolicy255A7916": {
+   "Type": "AWS::SQS::QueuePolicy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "sqs:SendMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl"
+       ],
+       "Condition": {
+        "ArnEquals": {
+         "aws:SourceArn": {
+          "Fn::GetAtt": [
+           "OnOrderReviewToQueueE6870EC8",
+           "Arn"
+          ]
+         }
+        }
+       },
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "events.amazonaws.com"
+       },
+       "Resource": {
+        "Fn::GetAtt": [
+         "ReviewQueueD8FD0AEF",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Queues": [
+     {
+      "Ref": "ReviewQueueD8FD0AEF"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/ReviewQueue/Policy/Resource"
+   }
+  },
   "ProductImagesBucket03BDA4C8": {
    "Type": "AWS::S3::Bucket",
    "Properties": {
@@ -578,7 +738,7 @@
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
      },
-     "S3Key": "b2566963ae6f2d4fd02c7f81ffcf8ce2f953067df6cd5b9f0971a5a071babb12.zip"
+     "S3Key": "39ed49f44931e11965bb53adb2227071ae1e1e1dece6207445760bcfed8135d2.zip"
     },
     "Environment": {
      "Variables": {
@@ -613,7 +773,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrderLambda/Resource",
-    "aws:asset:path": "asset.b2566963ae6f2d4fd02c7f81ffcf8ce2f953067df6cd5b9f0971a5a071babb12",
+    "aws:asset:path": "asset.39ed49f44931e11965bb53adb2227071ae1e1e1dece6207445760bcfed8135d2",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -803,6 +963,130 @@
        "Resource": {
         "Ref": "OrderNotificationsTopic7E297289"
        }
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "OrdersTable315BB997",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "OrdersTable315BB997",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ProductsTable241ADBFF",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ProductsTable241ADBFF",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
       }
      ],
      "Version": "2012-10-17"
@@ -825,12 +1109,18 @@
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
      },
-     "S3Key": "c8f8861b63c91941c3c8000a52159fc14272a1d0b492b27bf77209e79e13e929.zip"
+     "S3Key": "8ba64d0136c2e05595798e1afb79e27c23e2f59f8920805c0c1476e35ab725aa.zip"
     },
     "Environment": {
      "Variables": {
       "SNS_TOPIC_ARN": {
        "Ref": "OrderNotificationsTopic7E297289"
+      },
+      "ORDERS_TABLE_NAME": {
+       "Ref": "OrdersTable315BB997"
+      },
+      "PRODUCTS_TABLE_NAME": {
+       "Ref": "ProductsTable241ADBFF"
       }
      }
     },
@@ -851,7 +1141,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/NotificationLambda/Resource",
-    "aws:asset:path": "asset.c8f8861b63c91941c3c8000a52159fc14272a1d0b492b27bf77209e79e13e929",
+    "aws:asset:path": "asset.8ba64d0136c2e05595798e1afb79e27c23e2f59f8920805c0c1476e35ab725aa",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1545,6 +1835,22 @@
          "Arn"
         ]
        }
+      },
+      {
+       "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueUrl",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "ReviewQueueD8FD0AEF",
+         "Arn"
+        ]
+       }
       }
      ],
      "Version": "2012-10-17"
@@ -1567,7 +1873,7 @@
      "S3Bucket": {
       "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
      },
-     "S3Key": "90ab9e861664bd2a05f147d0e8420f00825c69a2a674ba5b9d7954e0406d24d6.zip"
+     "S3Key": "4a3c0c42521166faf2bd981b30a486affc8c6c3280ee88738959f5a84ac3de66.zip"
     },
     "Environment": {
      "Variables": {
@@ -1580,7 +1886,10 @@
       "EVENT_BUS_NAME": {
        "Ref": "OrdersBus68D47F66"
       },
-      "ADMIN_GROUP": "admins"
+      "ADMIN_GROUP": "admins",
+      "REVIEW_QUEUE_URL": {
+       "Ref": "ReviewQueueD8FD0AEF"
+      }
      }
     },
     "FunctionName": "OrderProcessingFraudDetection-AdminLambda",
@@ -1600,7 +1909,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/AdminLambda/Resource",
-    "aws:asset:path": "asset.90ab9e861664bd2a05f147d0e8420f00825c69a2a674ba5b9d7954e0406d24d6",
+    "aws:asset:path": "asset.4a3c0c42521166faf2bd981b30a486affc8c6c3280ee88738959f5a84ac3de66",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -2159,6 +2468,45 @@
    },
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OnFraudDecision/AllowEventRuleOrderProcessingFraudDetectionStackNotificationLambda7327E3EE"
+   }
+  },
+  "OnOrderReviewToQueueE6870EC8": {
+   "Type": "AWS::Events::Rule",
+   "Properties": {
+    "EventBusName": {
+     "Ref": "OrdersBus68D47F66"
+    },
+    "EventPattern": {
+     "source": [
+      "fraud.service"
+     ],
+     "detail-type": [
+      "OrderReview"
+     ]
+    },
+    "State": "ENABLED",
+    "Targets": [
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "ReviewQueueD8FD0AEF",
+        "Arn"
+       ]
+      },
+      "DeadLetterConfig": {
+       "Arn": {
+        "Fn::GetAtt": [
+         "ReviewQueueDLQ91DCF7B1",
+         "Arn"
+        ]
+       }
+      },
+      "Id": "Target0"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OnOrderReviewToQueue/Resource"
    }
   },
   "OnOrderBlockedRestoreStock3DF9C3F8": {
@@ -2916,7 +3264,7 @@
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Account"
    }
   },
-  "OrdersApiDeployment7E9592494d5f3fb4aa814dd526c9265063d5c83e": {
+  "OrdersApiDeployment7E959249338863afef6c53942b845f073479cc2d": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "Automatically created by the RestApi construct",
@@ -2935,6 +3283,9 @@
     "OrdersApiadminordersOPTIONS409D79A6",
     "OrdersApiadminordersC5F1146F",
     "OrdersApiadmin88F01F47",
+    "OrdersApiadminreviewqueueGETC56EB678",
+    "OrdersApiadminreviewqueueOPTIONS683331E3",
+    "OrdersApiadminreviewqueueDBEF0FE5",
     "OrdersApicartDELETEA5634C01",
     "OrdersApicartGETAAA4E34B",
     "OrdersApicartitemsskuDELETE30BD94DC",
@@ -2982,7 +3333,7 @@
    "Type": "AWS::ApiGateway::Stage",
    "Properties": {
     "DeploymentId": {
-     "Ref": "OrdersApiDeployment7E9592494d5f3fb4aa814dd526c9265063d5c83e"
+     "Ref": "OrdersApiDeployment7E959249338863afef6c53942b845f073479cc2d"
     },
     "RestApiId": {
      "Ref": "OrdersApi48294D44"
@@ -5756,6 +6107,194 @@
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/decision/POST/Resource"
    }
   },
+  "OrdersApiadminreviewqueueDBEF0FE5": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "OrdersApiadmin88F01F47"
+    },
+    "PathPart": "review-queue",
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/Resource"
+   }
+  },
+  "OrdersApiadminreviewqueueOPTIONS683331E3": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Authorization,Content-Type'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OrdersApiadminreviewqueueDBEF0FE5"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/OPTIONS/Resource"
+   }
+  },
+  "OrdersApiadminreviewqueueGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminreviewqueue396F4EBB": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "AdminLambda7A0A34D4",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/",
+       {
+        "Ref": "OrdersApiDeploymentStageprod80C33D00"
+       },
+       "/GET/admin/review-queue"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.review-queue"
+   }
+  },
+  "OrdersApiadminreviewqueueGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminreviewqueue38964264": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "AdminLambda7A0A34D4",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:",
+       {
+        "Ref": "AWS::Region"
+       },
+       ":",
+       {
+        "Ref": "AWS::AccountId"
+       },
+       ":",
+       {
+        "Ref": "OrdersApi48294D44"
+       },
+       "/test-invoke-stage/GET/admin/review-queue"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.review-queue"
+   }
+  },
+  "OrdersApiadminreviewqueueGETC56EB678": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "CognitoAuthorizerF3215DBC"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:",
+        {
+         "Ref": "AWS::Region"
+        },
+        ":lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "AdminLambda7A0A34D4",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OrdersApiadminreviewqueueDBEF0FE5"
+    },
+    "RestApiId": {
+     "Ref": "OrdersApi48294D44"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/review-queue/GET/Resource"
+   }
+  },
   "OrdersApiuploadsDAE59ED9": {
    "Type": "AWS::ApiGateway::Resource",
    "Properties": {
@@ -6030,7 +6569,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/5WTQW/bMAyFf8tyVrQiRS+7OW23y4YGTncahkCWOVeJLRoilSwV9N8HWXbiorv0xE961NMTAa3k6u5G3nxSJ1rq+rBsTSXDlpU+CHWiXajPVnVYVzI8q6oFcf/HDhAFHMEyyfCY6tpTki5c+tybahRkSYZn7I0ezieIgm5lWHt9AE6bmX6FRWf+Grv4spgHSknoVg4SydxaeMYHaIHhqdqDZlrE3yJLG2yNPl9d8/oD3vnAlhVDlx55tV4rgiha1VW1kuGrt5oN2nTVnDfgOkNk0EZhVCdDieM4Ur3Gy5RGsVNEwCSLVESLDcnwHZtvDn2fOieOQmNjDaMMPwncBrFN8oUnuG8NWJ5L73dGQ9WbRjGc1FmGEoiL3gxRr1hojd6yeIC+xXM32sxWW1bN8L4MJRB6pyENS/wAfsE6iSNN6njJyPlVUzQqPL+gM6/ghgCXVYyz854Yu//bvZE2Do+mBjfkGSacchrbCD307dzYSHJqTW5PnnvPUVisQe7p83F1J9NX2ZMxS+ctmw5kmes/hpxMWEcDAAA="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/5VTwW7bMAz9luWsaEWKXnZL2m6XFs2c7jQMgSxzrhJb9EQqWSb43wdJduxhu+xiPvKRT+QDvJKruxt5806daamr47IxpQw7Vvoo1Jn2obpY1WJVyvCqygbE/XebQC/gBJZJhscYN54idcWFz70x9oIsyfCKndFpPoGdL0k707FBG6vzvBf0g2T47MEnlQzSd4uN0ZdrMae9oFsZNl4fgSOV0dewaM1PYxcfFvPr4ll0KxNFMreuPeMDNMDwUh5AMy36byJT04Pz/D+088COFUMbHZukN4qgF41qy0rJ8NFbPZoxx1twrSFKthjVylDg4G2M03qTFXtFBExyHYNosCYZnrD+5NB3sXPEvdBYW8MowxcCt0VsIn3FI7hvDFieU39XBkHVmVoxnNVFhgKI151Jq05wrTV6y+IBugYv7SAzy3as6nRfBgUQeqchmiWegd+wiuSARnZ4ZMD5qnE1Wnt+Q2d+gUsLXLO+n817Ymz/LfcHtXV4MhW4tE9yOO5pbC106tu7oZHk2BrVXjx3nnthsQJ5oPen1Z2M/92BjFk6b9m0IIscfwMaQ+UulAMAAA=="
    },
    "Metadata": {
     "aws:cdk:path": "OrderProcessingFraudDetectionStack/CDKMetadata/Default"
@@ -6149,6 +6688,27 @@
    "Value": {
     "Ref": "OrderNotificationsTopic7E297289"
    }
+  },
+  "ReviewQueueUrl": {
+   "Value": {
+    "Ref": "ReviewQueueD8FD0AEF"
+   }
+  },
+  "ReviewQueueArn": {
+   "Value": {
+    "Fn::GetAtt": [
+     "ReviewQueueD8FD0AEF",
+     "Arn"
+    ]
+   }
+  },
+  "ReviewQueueDlqUrl": {
+   "Value": {
+    "Ref": "ReviewQueueDLQ91DCF7B1"
+   }
+  },
+  "AdminEmailsSubscribed": {
+   "Value": "saikaran.akula@sjsu.edu,srikavya.gelli@sjsu.edu,prajaktajivanrao.ketkar@sjsu.edu"
   }
  },
  "Conditions": {

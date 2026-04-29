@@ -6,11 +6,19 @@ export const adminApi = {
       auth: true,
       query: status ? { status } : undefined,
     }),
-  decideOrder: (orderId, decision) =>
+  decideOrder: (orderId, decision, receiptHandle) =>
     apiFetch(
       `/admin/orders/${encodeURIComponent(orderId)}/decision`,
-      { method: "POST", auth: true, body: { decision } }
+      {
+        method: "POST",
+        auth: true,
+        body: receiptHandle
+          ? { decision, receiptHandle }
+          : { decision },
+      }
     ),
+  listReviewQueue: () =>
+    apiFetch("/admin/review-queue", { auth: true }),
   requestImageUpload: (filename, contentType) =>
     apiFetch("/uploads/product-image", {
       method: "POST",

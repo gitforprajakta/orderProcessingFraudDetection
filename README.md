@@ -12,7 +12,8 @@ inside AWS Lambda.
 - EventBridge fan-out: OrderCreated → Fraud Lambda → FraudDecision → Notification + Stock-Restore
 - XGBoost model trained locally, exported to JSON, evaluated in pure Python in Lambda
 - S3 bucket + presigned uploads for product images
-- SNS topic for order-decision notifications
+- SNS topic for order-decision notifications (APPROVE / BLOCK / REVIEW), with up to 3 admin emails auto-subscribed
+- SQS `OrderReviewQueue` (with DLQ) holds every REVIEW order until an admin approves or blocks it
 - CloudWatch logs for every Lambda
 
 ## Architecture
@@ -32,9 +33,16 @@ API Gateway (Cognito JWT authorizer)
    └── /uploads/*  ──────►  UploadLambda     ──►  S3 presigned PUT
 
 EventBridge (OrdersBus)
-   ├── OrderCreated   ──►  FraudLambda  ──► Orders (status), EventBridge (decision)
-   └── OrderBlocked   ──►  StockRestoreLambda ──► Products (stock++)
-                       └►  NotificationLambda ──► SNS topic (email/SMS)
+   ├── OrderCreated                  ──►  FraudLambda  ──► Orders (status), EventBridge (decision)
+   ├── OrderApproved/Blocked/Review  ──►  NotificationLambda ──► SNS topic ──► 3 admin emails
+   ├── OrderReview                   ──►  SQS OrderReviewQueue (waits for an admin)
+   └── OrderBlocked                  ──►  StockRestoreLambda ──► Products (stock++)
+
+Admin reviews a queued order:
+   AdminLambda  GET  /admin/review-queue           ◄── pulls messages from SQS
+   AdminLambda  POST /admin/orders/{id}/decision   ──► updates DDB
+                                                   ──► EventBridge OrderApproved/Blocked
+                                                   ──► deletes the SQS message
 
 S3 (product images) ◄── public read for catalog images
 ```
@@ -114,6 +122,18 @@ npx cdk bootstrap aws://${AWS_ACCOUNT_ID}/${AWS_REGION}
 npx cdk deploy
 ```
 
+To pre-subscribe up to three admin emails to the SNS notifications topic
+during the deploy (recommended), pass them via the `adminEmails` CDK
+context (comma-separated). Each address gets a one-click confirmation
+email from AWS:
+
+```bash
+npx cdk deploy -c adminEmails="alice@example.com,bob@example.com,carol@example.com"
+```
+
+You can also subscribe / unsubscribe later via the AWS console or the CLI
+snippet in step 7.
+
 Useful outputs:
 
 | Output                       | Used by                        |
@@ -126,7 +146,11 @@ Useful outputs:
 | `OrdersTableName`            | DynamoDB                       |
 | `ProductsTableName`          | DynamoDB                       |
 | `CartsTableName`             | DynamoDB                       |
-| `OrderNotificationsTopicArn` | Subscribe email for alerts     |
+| `OrderNotificationsTopicArn` | Subscribe email for APPROVE / BLOCK / REVIEW alerts |
+| `ReviewQueueUrl`             | SQS queue URL holding REVIEW orders |
+| `ReviewQueueArn`             | SQS queue ARN                  |
+| `ReviewQueueDlqUrl`          | DLQ for failed review messages |
+| `AdminEmailsSubscribed`      | Echo of `-c adminEmails=` value used at deploy |
 
 Re-fetch outputs anytime:
 
@@ -240,8 +264,28 @@ deterministic regardless of model drift.
 4. **Orders** tab — filter by status (default `REVIEW`), click **Approve** or
    **Block** to override fraud decisions. Block events automatically restore
    stock via `stock_restore_service`.
+5. **Review Queue** tab — every order the fraud model marks as `REVIEW` is
+   pushed onto the `OrderReviewQueue` SQS queue, and an SNS email goes out
+   to all subscribed admins. The first admin to open this tab pulls the
+   message (visibility timeout makes it temporarily invisible to the others
+   to avoid double-handling) and clicks **Approve** or **Block**. That:
 
-## 7. Optional: SNS email subscription
+   - Updates the order's `status` in DynamoDB
+   - Emits an `OrderApproved` / `OrderBlocked` EventBridge event (which
+     triggers another SNS email and, for Block, the stock-restore Lambda)
+   - **Deletes the message from the SQS queue** using the receipt handle
+     returned by `GET /admin/review-queue`
+
+## 7. SNS email subscriptions for the three admins
+
+The recommended path is to pass the three admin emails when you deploy
+the stack so CDK creates and manages the subscriptions:
+
+```bash
+npx cdk deploy -c adminEmails="alice@example.com,bob@example.com,carol@example.com"
+```
+
+To add or change subscribers later without redeploying:
 
 ```bash
 export TOPIC_ARN=<OrderNotificationsTopicArn>
@@ -252,7 +296,9 @@ aws sns subscribe \
   --notification-endpoint your-email@example.com
 ```
 
-Confirm the subscription email. Every fraud decision will be emailed.
+Confirm the subscription email. Every APPROVE / BLOCK / REVIEW decision is
+emailed, including the second notification that fires when an admin
+approves or blocks a queued order from the **Review Queue** tab.
 
 ## 8. Logs
 
@@ -307,7 +353,12 @@ Admin-only (`cognito:groups` must contain `admins`):
 - `PUT    /products/{sku}`           update product
 - `DELETE /products/{sku}`           soft-delete product
 - `GET    /admin/orders`             list all orders (`?status=` filter)
-- `POST   /admin/orders/{id}/decision` `{decision: "APPROVE" | "BLOCK"}`
+- `POST   /admin/orders/{id}/decision` `{decision: "APPROVE" | "BLOCK", receiptHandle?: string}`
+  – when `receiptHandle` is present (returned by `/admin/review-queue`),
+  the matching message is deleted from the SQS queue.
+- `GET    /admin/review-queue`       pull pending REVIEW messages from SQS
+  (`?max=1..10`, default 10). Each entry includes `receiptHandle`,
+  `orderId`, `score`, and the order record from DynamoDB.
 - `POST   /uploads/product-image`    presigned S3 PUT URL for `{filename, contentType}`
 
 ## Troubleshooting

@@ -18,6 +18,7 @@ import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminInventory from "./pages/admin/AdminInventory.jsx";
 import AdminProductForm from "./pages/admin/AdminProductForm.jsx";
 import AdminOrders from "./pages/admin/AdminOrders.jsx";
+import AdminReviewQueue from "./pages/admin/AdminReviewQueue.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
 export default function App() {
@@ -79,6 +80,7 @@ export default function App() {
             <Route path="inventory/new" element={<AdminProductForm />} />
             <Route path="inventory/:sku" element={<AdminProductForm />} />
             <Route path="orders" element={<AdminOrders />} />
+            <Route path="review-queue" element={<AdminReviewQueue />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
