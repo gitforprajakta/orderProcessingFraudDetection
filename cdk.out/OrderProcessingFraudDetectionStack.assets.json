@@ -1,0 +1,76 @@
+{
+  "version": "53.0.0",
+  "files": {
+    "3c7bd8f814cfc0d32e8f5d3e2376b2398a8ddfe86dabc48d34891114d3e6023d": {
+      "displayName": "OrderLambda/Code",
+      "source": {
+        "path": "asset.3c7bd8f814cfc0d32e8f5d3e2376b2398a8ddfe86dabc48d34891114d3e6023d",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "current_account-current_region-4ad80a36": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "3c7bd8f814cfc0d32e8f5d3e2376b2398a8ddfe86dabc48d34891114d3e6023d.zip",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    },
+    "080d117b8d5cd1a3791d6159834a820840f32a8c15f6e54f881e71ef06e725bd": {
+      "displayName": "FraudLambda/Code",
+      "source": {
+        "path": "asset.080d117b8d5cd1a3791d6159834a820840f32a8c15f6e54f881e71ef06e725bd",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "current_account-current_region-aa5c7a89": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "080d117b8d5cd1a3791d6159834a820840f32a8c15f6e54f881e71ef06e725bd.zip",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    },
+    "c8f8861b63c91941c3c8000a52159fc14272a1d0b492b27bf77209e79e13e929": {
+      "displayName": "NotificationLambda/Code",
+      "source": {
+        "path": "asset.c8f8861b63c91941c3c8000a52159fc14272a1d0b492b27bf77209e79e13e929",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "current_account-current_region-3c308dc8": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "c8f8861b63c91941c3c8000a52159fc14272a1d0b492b27bf77209e79e13e929.zip",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    },
+    "07a90cc3efdfc34da22208dcd9d211f06f5b0e01b21e778edc7c3966b1f61d57": {
+      "displayName": "DemoUserProvider/framework-onEvent/Code",
+      "source": {
+        "path": "asset.07a90cc3efdfc34da22208dcd9d211f06f5b0e01b21e778edc7c3966b1f61d57",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "current_account-current_region-3e934f01": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "07a90cc3efdfc34da22208dcd9d211f06f5b0e01b21e778edc7c3966b1f61d57.zip",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    },
+    "3fd823dd9176b44ec2926695c3454ea153844ff12b4947b5f0083392c5900372": {
+      "displayName": "OrderProcessingFraudDetectionStack Template",
+      "source": {
+        "path": "OrderProcessingFraudDetectionStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "current_account-current_region-e8ebc3a1": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "3fd823dd9176b44ec2926695c3454ea153844ff12b4947b5f0083392c5900372.json",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

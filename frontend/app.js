@@ -6,7 +6,7 @@ const output = document.getElementById("output");
 const submitBtn = document.getElementById("submitBtn");
 
 const APP_CONFIG = {
-  apiUrl: "https://ylplykxmcl.execute-api.us-west-2.amazonaws.com/prod",
+  apiUrl: "https://j6cq4fhg2i.execute-api.us-west-1.amazonaws.com/prod",
   awsRegion: "us-west-2",
   userPoolClientId: "3id9o7r73hoihu8s8hfde4s820",
   username: "testuser",

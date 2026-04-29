@@ -1,0 +1,332 @@
+{
+  "/OrderProcessingFraudDetectionStack/ApiUrl": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "ApiUrl"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/CognitoUserPoolId": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CognitoUserPoolId"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/CognitoUserPoolClientId": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CognitoUserPoolClientId"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersEventBusName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersEventBusName"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersTableName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersTableName"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderLambdaName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderLambdaName"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/FraudLambdaName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "FraudLambdaName"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/NotificationLambdaName": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "NotificationLambdaName"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderNotificationsTopicArn": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderNotificationsTopicArn"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/BootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "BootstrapVersion"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/CheckBootstrapVersion": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CheckBootstrapVersion"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersTable/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersTable315BB997"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersBus/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersBus68D47F66"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderNotificationsTopic/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderNotificationsTopic7E297289"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderLambda/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderLambda008D7AE5"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/FraudLambda/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "FraudLambdaBB85B802"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/NotificationLambda/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "NotificationLambda0BF28E71"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-OrderLambdaLogGroup/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderProcessingFraudDetectionOrderLambdaLogGroupF965C4D7"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-FraudLambdaLogGroup/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderProcessingFraudDetectionFraudLambdaLogGroupF621CFED"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderProcessingFraudDetection-NotificationLambdaLogGroup/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderProcessingFraudDetectionNotificationLambdaLogGroup109C560C"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OnOrderCreated/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OnOrderCreatedC438101E"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OnOrderCreated/AllowEventRuleOrderProcessingFraudDetectionStackFraudLambda77162E96": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OnOrderCreatedAllowEventRuleOrderProcessingFraudDetectionStackFraudLambda77162E963142D6CD"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OnFraudDecision/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OnFraudDecisionAA1B686B"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OnFraudDecision/AllowEventRuleOrderProcessingFraudDetectionStackNotificationLambda7327E3EE": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OnFraudDecisionAllowEventRuleOrderProcessingFraudDetectionStackNotificationLambda7327E3EECBA42948"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/UserPool/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "UserPool6BA7E5F2"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/DemoUserHandler/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DemoUserHandler8E6E5E67"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/DemoUser/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DemoUser"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApi48294D44"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Account": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiAccount74B8FE66"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Endpoint": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiEndpointAC1CCDAC"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/CognitoAuthorizer/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CognitoAuthorizerF3215DBC"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/CDKMetadata/Default": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CDKMetadata"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/CDKMetadata/Condition": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "CDKMetadataAvailable"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderLambda/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderLambdaServiceRoleD5490479"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/FraudLambda/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "FraudLambdaServiceRole08294303"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/NotificationLambda/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "NotificationLambdaServiceRoleA65BA193"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/UserPool/smsRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "UserPoolsmsRole4EA729DD"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/UserPool/UserPoolClient/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "UserPoolUserPoolClient40176907"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/DemoUserHandler/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DemoUserHandlerServiceRoleDACD35FD"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/DemoUserProvider/framework-onEvent/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DemoUserProviderframeworkonEvent0894DB46"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/CloudWatchRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiCloudWatchRole00EA2E11"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Deployment/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiDeployment7E959249f978d42dedf489c6dbb51db1d612bc16"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/DeploymentStage.prod/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiDeploymentStageprod80C33D00"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrderLambda/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrderLambdaServiceRoleDefaultPolicyB925A13D"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/FraudLambda/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "FraudLambdaServiceRoleDefaultPolicy7106ED15"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/NotificationLambda/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "NotificationLambdaServiceRoleDefaultPolicy56F80AE2"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/DemoUserHandler/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DemoUserHandlerServiceRoleDefaultPolicy6A68F045"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/DemoUserProvider/framework-onEvent/ServiceRole/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DemoUserProviderframeworkonEventServiceRoleD9E1119F"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiOPTIONS3B3E4330"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/orders/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiordersDBA2FB62"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/DemoUserProvider/framework-onEvent/ServiceRole/DefaultPolicy/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "DemoUserProviderframeworkonEventServiceRoleDefaultPolicyA02F8702"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/orders/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiordersOPTIONSEF8B4CF0"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/orders/POST/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..orders": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiordersPOSTApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTordersCFFE9AEF"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/orders/POST/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..orders": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiordersPOSTApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTorders4D0E553F"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/orders/POST/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiordersPOSTAD0E8A63"
+    }
+  ]
+}

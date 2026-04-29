@@ -67,7 +67,7 @@ Bootstrap once per AWS account and region:
 
 ```bash
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-npx cdk bootstrap aws://${AWS_ACCOUNT_ID}/${AWS_REGION}
+npx cdk bootstrap aws://${437399477141}/${us-east-2}
 ```
 
 Deploy:
