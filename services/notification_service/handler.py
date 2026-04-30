@@ -12,6 +12,14 @@ def handler(event, context):
 
     detail_type = event.get("detail-type") or event.get("detailType") or "Unknown"
     detail = event.get("detail") or {}
+    order_id = detail.get("orderId", "unknown")
+
+    if detail_type == "OrderSentToReviewQueue":
+        subject = f"Order in review queue: {order_id}"
+    elif detail_type == "OrderReviewResolved":
+        subject = f"Order review resolved: {order_id}"
+    else:
+        subject = f"Order decision: {detail_type}"
 
     msg = {
         "event": detail_type,
@@ -20,7 +28,7 @@ def handler(event, context):
 
     sns.publish(
         TopicArn=topic_arn,
-        Subject=f"Order decision: {detail_type}",
+        Subject=subject,
         Message=json.dumps(msg),
     )
 

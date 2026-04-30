@@ -8,6 +8,8 @@ import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as sns from "aws-cdk-lib/aws-sns";
+import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as cr from "aws-cdk-lib/custom-resources";
 import * as iam from "aws-cdk-lib/aws-iam";
 
@@ -31,11 +33,32 @@ export class PlatformStack extends cdk.Stack {
     const topic = new sns.Topic(this, "OrderNotificationsTopic", {
       topicName: "OrderNotificationsTopic",
     });
+    const notificationEmails = (this.node.tryGetContext("notificationEmails") as string[]) || [];
+    notificationEmails.forEach((email, index) => {
+      if (email && email.includes("@")) {
+        topic.addSubscription(
+          new subscriptions.EmailSubscription(email, {
+            json: true,
+          })
+        );
+      } else {
+        cdk.Annotations.of(this).addWarning(
+          `notificationEmails[${index}] is not a valid email: ${email}`
+        );
+      }
+    });
+
+    const reviewQueue = new sqs.Queue(this, "ReviewRequestsQueue", {
+      queueName: "ReviewRequestsQueue",
+      visibilityTimeout: cdk.Duration.seconds(30),
+      retentionPeriod: cdk.Duration.days(4),
+    });
 
     const orderLambdaName = "OrderProcessingFraudDetection-OrderLambda";
     const fraudLambdaName = "OrderProcessingFraudDetection-FraudLambda";
     const notificationLambdaName =
       "OrderProcessingFraudDetection-NotificationLambda";
+    const reviewLambdaName = "OrderProcessingFraudDetection-ReviewLambda";
 
     // Lambdas (Python)
     const orderLambda = new lambda.Function(this, "OrderLambda", {
@@ -60,6 +83,7 @@ export class PlatformStack extends cdk.Stack {
       environment: {
         EVENT_BUS_NAME: bus.eventBusName,
         ORDERS_TABLE_NAME: ordersTable.tableName,
+        REVIEW_QUEUE_URL: reviewQueue.queueUrl,
         MODEL_ARTIFACT_DIR: "artifacts",
         APPROVE_THRESHOLD: "0.30",
         BLOCK_THRESHOLD: "0.70",
@@ -76,11 +100,24 @@ export class PlatformStack extends cdk.Stack {
         SNS_TOPIC_ARN: topic.topicArn,
       },
     });
+    const reviewLambda = new lambda.Function(this, "ReviewLambda", {
+      functionName: reviewLambdaName,
+      runtime: lambda.Runtime.PYTHON_3_11,
+      code: lambda.Code.fromAsset("services/review_service"),
+      handler: "handler.handler",
+      timeout: cdk.Duration.seconds(15),
+      environment: {
+        ORDERS_TABLE_NAME: ordersTable.tableName,
+        EVENT_BUS_NAME: bus.eventBusName,
+        REVIEW_QUEUE_URL: reviewQueue.queueUrl,
+      },
+    });
 
     [
       orderLambdaName,
       fraudLambdaName,
       notificationLambdaName,
+      reviewLambdaName,
     ].forEach((functionName) => {
       new logs.LogGroup(this, `${functionName}LogGroup`, {
         logGroupName: `/aws/lambda/${functionName}`,
@@ -95,8 +132,12 @@ export class PlatformStack extends cdk.Stack {
 
     ordersTable.grantWriteData(fraudLambda);
     bus.grantPutEventsTo(fraudLambda);
+    reviewQueue.grantSendMessages(fraudLambda);
 
     topic.grantPublish(notificationLambda);
+    ordersTable.grantReadWriteData(reviewLambda);
+    bus.grantPutEventsTo(reviewLambda);
+    reviewQueue.grantConsumeMessages(reviewLambda);
 
     // EventBridge rules
     new events.Rule(this, "OnOrderCreated", {
@@ -111,8 +152,14 @@ export class PlatformStack extends cdk.Stack {
     new events.Rule(this, "OnFraudDecision", {
       eventBus: bus,
       eventPattern: {
-        source: ["fraud.service"],
-        detailType: ["OrderApproved", "OrderBlocked", "OrderReview"],
+        source: ["fraud.service", "review.service"],
+        detailType: [
+          "OrderApproved",
+          "OrderBlocked",
+          "OrderReview",
+          "OrderSentToReviewQueue",
+          "OrderReviewResolved",
+        ],
       },
       targets: [new targets.LambdaFunction(notificationLambda)],
     });
@@ -228,6 +275,13 @@ def handler(event, context):
       authorizationType: apigw.AuthorizationType.COGNITO,
       authorizer,
     });
+    const reviews = api.root.addResource("reviews");
+    const reviewOrder = reviews.addResource("{orderId}");
+    const reviewDecision = reviewOrder.addResource("decision");
+    reviewDecision.addMethod("POST", new apigw.LambdaIntegration(reviewLambda), {
+      authorizationType: apigw.AuthorizationType.COGNITO,
+      authorizer,
+    });
 
     new cdk.CfnOutput(this, "ApiUrl", { value: api.url.replace(/\/$/, "") });
     new cdk.CfnOutput(this, "CognitoUserPoolId", {
@@ -247,8 +301,17 @@ def handler(event, context):
     new cdk.CfnOutput(this, "NotificationLambdaName", {
       value: notificationLambda.functionName,
     });
+    new cdk.CfnOutput(this, "ReviewLambdaName", {
+      value: reviewLambda.functionName,
+    });
     new cdk.CfnOutput(this, "OrderNotificationsTopicArn", {
       value: topic.topicArn,
+    });
+    new cdk.CfnOutput(this, "ReviewQueueUrl", {
+      value: reviewQueue.queueUrl,
+    });
+    new cdk.CfnOutput(this, "ReviewDecisionEndpoint", {
+      value: `${api.url.replace(/\/$/, "")}/reviews/{orderId}/decision`,
     });
   }
 }

@@ -11,6 +11,7 @@ from xgb_inference import predict_probability
 
 ddb = boto3.resource("dynamodb")
 events = boto3.client("events")
+sqs = boto3.client("sqs")
 
 
 def _clamp01(x: float) -> float:
@@ -44,31 +45,39 @@ def _xgboost_score(detail: dict) -> float:
     return _clamp01(predict_probability(features))
 
 
-def _update_order_status(order_id: str, out_detail: dict) -> None:
+def _update_order_status(order_id: str, out_detail: dict, review_message_id: str | None = None) -> None:
     table_name = os.environ.get("ORDERS_TABLE_NAME")
     if not table_name or order_id == "unknown":
         return
 
     table = ddb.Table(table_name)
+    update_expression = (
+        "SET #status = :status, fraudDecision = :decision, "
+        "fraudScore = :score, fraudModelVersion = :model, evaluatedAt = :evaluated"
+    )
+    expression_values = {
+        ":status": out_detail["decision"],
+        ":decision": out_detail["decision"],
+        ":score": Decimal(str(out_detail["score"])),
+        ":model": out_detail["modelVersion"],
+        ":evaluated": out_detail["evaluatedAt"],
+    }
+    if review_message_id:
+        update_expression += ", reviewMessageId = :reviewMessageId, reviewQueueAt = :reviewQueueAt"
+        expression_values[":reviewMessageId"] = review_message_id
+        expression_values[":reviewQueueAt"] = out_detail["evaluatedAt"]
+
     table.update_item(
         Key={"orderId": order_id},
-        UpdateExpression=(
-            "SET #status = :status, fraudDecision = :decision, "
-            "fraudScore = :score, fraudModelVersion = :model, evaluatedAt = :evaluated"
-        ),
+        UpdateExpression=update_expression,
         ExpressionAttributeNames={"#status": "status"},
-        ExpressionAttributeValues={
-            ":status": out_detail["decision"],
-            ":decision": out_detail["decision"],
-            ":score": Decimal(str(out_detail["score"])),
-            ":model": out_detail["modelVersion"],
-            ":evaluated": out_detail["evaluatedAt"],
-        },
+        ExpressionAttributeValues=expression_values,
     )
 
 
 def handler(event, context):
     bus_name = os.environ["EVENT_BUS_NAME"]
+    review_queue_url = os.environ["REVIEW_QUEUE_URL"]
     approve_th = float(os.environ.get("APPROVE_THRESHOLD", "0.30"))
     block_th = float(os.environ.get("BLOCK_THRESHOLD", "0.70"))
 
@@ -103,18 +112,50 @@ def handler(event, context):
         "thresholds": {"approve": approve_th, "block": block_th},
         "evaluatedAt": int(time.time() * 1000),
     }
-    _update_order_status(order_id, out_detail)
+    review_message_id = None
+    if decision == "REVIEW":
+        message_body = json.dumps(
+            {
+                "orderId": order_id,
+                "score": score,
+                "decision": decision,
+                "queuedAt": out_detail["evaluatedAt"],
+            }
+        )
+        send_result = sqs.send_message(
+            QueueUrl=review_queue_url,
+            MessageBody=message_body,
+        )
+        review_message_id = send_result.get("MessageId")
 
-    events.put_events(
-        Entries=[
+    _update_order_status(order_id, out_detail, review_message_id)
+
+    entries = [
+        {
+            "EventBusName": bus_name,
+            "Source": "fraud.service",
+            "DetailType": detail_type,
+            "Detail": json.dumps(out_detail),
+        }
+    ]
+    if decision == "REVIEW":
+        entries.append(
             {
                 "EventBusName": bus_name,
                 "Source": "fraud.service",
-                "DetailType": detail_type,
-                "Detail": json.dumps(out_detail),
+                "DetailType": "OrderSentToReviewQueue",
+                "Detail": json.dumps(
+                    {
+                        "orderId": order_id,
+                        "decision": decision,
+                        "score": score,
+                        "reviewMessageId": review_message_id,
+                        "queuedAt": out_detail["evaluatedAt"],
+                    }
+                ),
             }
-        ]
-    )
+        )
+    events.put_events(Entries=entries)
 
     return {"ok": True, "emitted": detail_type, "orderId": order_id, "score": score}
 
