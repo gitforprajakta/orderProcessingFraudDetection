@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc -p infra/tsconfig.json",
     "synth": "cdk synth",
-    "deploy": "cdk deploy"
+    "deploy": "cdk deploy",
+    "frontend:config": "node scripts/write-frontend-config.js"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

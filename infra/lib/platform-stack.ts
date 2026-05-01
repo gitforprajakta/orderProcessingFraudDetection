@@ -10,6 +10,8 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as cr from "aws-cdk-lib/custom-resources";
 import * as iam from "aws-cdk-lib/aws-iam";
 
@@ -184,7 +186,12 @@ export class PlatformStack extends cdk.Stack {
     });
 
     const demoUsername = "testuser";
-    const demoPassword = "YourSecurePassw0rd!";
+    const demoPassword = process.env.DEMO_USER_PASSWORD;
+    if (!demoPassword) {
+      throw new Error(
+        "Set DEMO_USER_PASSWORD before deploying so CDK can create the demo Cognito user."
+      );
+    }
     const demoUserHandler = new lambda.Function(this, "DemoUserHandler", {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "index.handler",
@@ -263,6 +270,23 @@ def handler(event, context):
         allowHeaders: ["Authorization", "Content-Type"],
       },
     });
+    const gatewayCorsHeaders = {
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+      "gatewayresponse.header.Access-Control-Allow-Headers":
+        "'Authorization,Content-Type'",
+      "gatewayresponse.header.Access-Control-Allow-Methods": "'OPTIONS,POST'",
+    };
+    [
+      { id: "Default4xxCorsResponse", type: apigw.ResponseType.DEFAULT_4XX },
+      { id: "Default5xxCorsResponse", type: apigw.ResponseType.DEFAULT_5XX },
+      { id: "UnauthorizedCorsResponse", type: apigw.ResponseType.UNAUTHORIZED },
+      { id: "AccessDeniedCorsResponse", type: apigw.ResponseType.ACCESS_DENIED },
+    ].forEach(({ id, type }) => {
+      api.addGatewayResponse(id, {
+        type,
+        responseHeaders: gatewayCorsHeaders,
+      });
+    });
 
     const authorizer = new apigw.CognitoUserPoolsAuthorizer(
       this,
@@ -283,7 +307,44 @@ def handler(event, context):
       authorizer,
     });
 
+    const frontendBucket = new s3.Bucket(this, "FrontendBucket", {
+      websiteIndexDocument: "index.html",
+      publicReadAccess: true,
+      blockPublicAccess: new s3.BlockPublicAccess({
+        blockPublicAcls: false,
+        blockPublicPolicy: false,
+        ignorePublicAcls: false,
+        restrictPublicBuckets: false,
+      }),
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+
+    new s3deploy.BucketDeployment(this, "FrontendDeployment", {
+      sources: [
+        s3deploy.Source.asset("frontend", {
+          exclude: ["config.js"],
+        }),
+        s3deploy.Source.data(
+          "config.js",
+          `window.APP_CONFIG = Object.freeze(${JSON.stringify(
+            {
+              apiUrl: api.url.replace(/\/$/, ""),
+              awsRegion: this.region,
+              userPoolClientId: userPoolClient.userPoolClientId,
+              demoUsername,
+            },
+            null,
+            2
+          )});\n`
+        ),
+      ],
+      destinationBucket: frontendBucket,
+    });
+
     new cdk.CfnOutput(this, "ApiUrl", { value: api.url.replace(/\/$/, "") });
+    new cdk.CfnOutput(this, "AwsRegion", { value: this.region });
     new cdk.CfnOutput(this, "CognitoUserPoolId", {
       value: userPool.userPoolId,
     });
@@ -312,6 +373,9 @@ def handler(event, context):
     });
     new cdk.CfnOutput(this, "ReviewDecisionEndpoint", {
       value: `${api.url.replace(/\/$/, "")}/reviews/{orderId}/decision`,
+    });
+    new cdk.CfnOutput(this, "FrontendUrl", {
+      value: frontendBucket.bucketWebsiteUrl,
     });
   }
 }

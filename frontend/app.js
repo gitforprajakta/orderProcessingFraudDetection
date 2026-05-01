@@ -1,20 +1,63 @@
 const orderForm = document.getElementById("orderForm");
+const loginForm = document.getElementById("loginForm");
+const page = document.getElementById("page");
+const loginCard = document.getElementById("loginCard");
+const orderCard = document.getElementById("orderCard");
+const outputCard = document.getElementById("outputCard");
 const itemsContainer = document.getElementById("itemsContainer");
 const addItemBtn = document.getElementById("addItemBtn");
 const itemRowTemplate = document.getElementById("itemRowTemplate");
 const output = document.getElementById("output");
+const loginBtn = document.getElementById("loginBtn");
 const submitBtn = document.getElementById("submitBtn");
+const signedInAs = document.getElementById("signedInAs");
+const loginStatus = document.getElementById("loginStatus");
+const authUsername = document.getElementById("authUsername");
+const authPassword = document.getElementById("authPassword");
 
-const APP_CONFIG = {
-  apiUrl: "https://w6yswx6f02.execute-api.us-west-2.amazonaws.com/prod",
-  awsRegion: "us-west-2",
-  userPoolClientId: "7mskkpiid0qdjbvh3b0k0o60h5",
-  username: "testuser",
-  password: "YourSecurePassw0rd!",
-};
+const APP_CONFIG = window.APP_CONFIG || {};
+let idToken = "";
+let signedInUsername = "";
+
+if (authUsername && APP_CONFIG.demoUsername) {
+  authUsername.value = APP_CONFIG.demoUsername;
+}
 
 function renderOutput(data) {
   output.textContent = JSON.stringify(data, null, 2);
+}
+
+function renderLoginStatus(message, isError = false) {
+  loginStatus.textContent = message;
+  loginStatus.classList.toggle("error", isError);
+}
+
+function getRequiredConfigValue(key) {
+  const value = APP_CONFIG[key];
+  if (!value) {
+    throw new Error(`Missing frontend config value: ${key}. Regenerate frontend/config.js after deploy.`);
+  }
+  return value;
+}
+
+function getAuthCredentials() {
+  const username = authUsername.value.trim();
+  const password = authPassword.value;
+
+  if (!username || !password) {
+    throw new Error("Enter the Cognito demo username and password before submitting.");
+  }
+
+  return { username, password };
+}
+
+function showOrderConsole() {
+  loginCard.hidden = true;
+  orderCard.hidden = false;
+  outputCard.hidden = false;
+  page.classList.remove("auth-mode");
+  signedInAs.textContent = `Signed in as ${signedInUsername}`;
+  renderOutput({ status: "Signed in. Enter order details and submit." });
 }
 
 function createItemRow(values = {}) {
@@ -42,8 +85,12 @@ addItemBtn.addEventListener("click", () => {
 });
 
 async function getIdToken() {
+  const { username, password } = getAuthCredentials();
+  const awsRegion = getRequiredConfigValue("awsRegion");
+  const userPoolClientId = getRequiredConfigValue("userPoolClientId");
+
   const response = await fetch(
-    `https://cognito-idp.${APP_CONFIG.awsRegion}.amazonaws.com/`,
+    `https://cognito-idp.${awsRegion}.amazonaws.com/`,
     {
       method: "POST",
       headers: {
@@ -52,10 +99,10 @@ async function getIdToken() {
       },
       body: JSON.stringify({
         AuthFlow: "USER_PASSWORD_AUTH",
-        ClientId: APP_CONFIG.userPoolClientId,
+        ClientId: userPoolClientId,
         AuthParameters: {
-          USERNAME: APP_CONFIG.username,
-          PASSWORD: APP_CONFIG.password,
+          USERNAME: username,
+          PASSWORD: password,
         },
       }),
     }
@@ -75,7 +122,7 @@ async function getIdToken() {
 }
 
 async function submitOrder(payload, idToken) {
-  const endpoint = `${APP_CONFIG.apiUrl}/orders`;
+  const endpoint = `${getRequiredConfigValue("apiUrl")}/orders`;
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -122,12 +169,11 @@ orderForm.addEventListener("submit", async (event) => {
   submitBtn.disabled = true;
   submitBtn.textContent = "Running...";
   renderOutput({
-    status: "Signing in to Cognito and submitting order...",
+    status: "Submitting order...",
     payload,
   });
 
   try {
-    const idToken = await getIdToken();
     const result = await submitOrder(payload, idToken);
 
     renderOutput({
@@ -157,6 +203,31 @@ orderForm.addEventListener("submit", async (event) => {
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "Submit Order and Run Fraud Check";
+  }
+});
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = "Signing in...";
+  renderLoginStatus("Signing in to Cognito...");
+
+  try {
+    idToken = await getIdToken();
+    signedInUsername = authUsername.value.trim();
+    authPassword.value = "";
+    renderLoginStatus("");
+    showOrderConsole();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    renderLoginStatus(
+      `Could not sign in. ${detail} Check the demo username/password and confirm frontend/config.js matches the latest deployed stack.`,
+      true
+    );
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Continue to Order Form";
   }
 });
 
