@@ -87,6 +87,7 @@ Useful outputs:
 
 - `ApiUrl`
 - `CognitoUserPoolClientId`
+- `FrontendUrl`
 - `OrdersTableName`
 - `OrderLambdaName`
 - `FraudLambdaName`
@@ -104,19 +105,9 @@ aws cloudformation describe-stacks \
 
 ## Deploy Frontend
 
-For Amplify drag-and-drop deploy, upload a zip whose root contains `index.html`, `app.js`, and `styles.css`.
+The frontend is deployed by CDK to an S3 static website bucket. `npm run deploy` uploads `frontend/` and generates `config.js` automatically with the current API URL, AWS region, and Cognito client ID.
 
-```bash
-rm -f frontend-static.zip
-cd frontend
-zip -r ../frontend-static.zip index.html app.js styles.css config.js
-```
-
-Upload `frontend-static.zip` to Amplify.
-
-For Git-based Amplify deploy, connect this repository and use `amplify.yml`. It publishes the `frontend/` folder from GitHub.
-
-Important: `npm run deploy` regenerates `frontend/config.js` locally from the current CDK stack outputs. Commit and push the updated `frontend/config.js` after each backend redeploy so Amplify receives the latest API URL and Cognito client ID. This file contains public frontend settings only; do not put passwords or other secrets in it.
+Use the `FrontendUrl` stack output after deployment. You do not need to commit or push `frontend/config.js`; it is generated inside the deployed frontend on every stack deploy.
 
 The demo password is not committed. Set it with `DEMO_USER_PASSWORD` before deployment and enter the same value in the frontend login form.
 

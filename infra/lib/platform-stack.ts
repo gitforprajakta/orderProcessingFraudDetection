@@ -10,6 +10,8 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as subscriptions from "aws-cdk-lib/aws-sns-subscriptions";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as cr from "aws-cdk-lib/custom-resources";
 import * as iam from "aws-cdk-lib/aws-iam";
 
@@ -268,6 +270,23 @@ def handler(event, context):
         allowHeaders: ["Authorization", "Content-Type"],
       },
     });
+    const gatewayCorsHeaders = {
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+      "gatewayresponse.header.Access-Control-Allow-Headers":
+        "'Authorization,Content-Type'",
+      "gatewayresponse.header.Access-Control-Allow-Methods": "'OPTIONS,POST'",
+    };
+    [
+      apigw.ResponseType.DEFAULT_4XX,
+      apigw.ResponseType.DEFAULT_5XX,
+      apigw.ResponseType.UNAUTHORIZED,
+      apigw.ResponseType.ACCESS_DENIED,
+    ].forEach((type) => {
+      api.addGatewayResponse(`${type}CorsResponse`, {
+        type,
+        responseHeaders: gatewayCorsHeaders,
+      });
+    });
 
     const authorizer = new apigw.CognitoUserPoolsAuthorizer(
       this,
@@ -286,6 +305,42 @@ def handler(event, context):
     reviewDecision.addMethod("POST", new apigw.LambdaIntegration(reviewLambda), {
       authorizationType: apigw.AuthorizationType.COGNITO,
       authorizer,
+    });
+
+    const frontendBucket = new s3.Bucket(this, "FrontendBucket", {
+      websiteIndexDocument: "index.html",
+      publicReadAccess: true,
+      blockPublicAccess: new s3.BlockPublicAccess({
+        blockPublicAcls: false,
+        blockPublicPolicy: false,
+        ignorePublicAcls: false,
+        restrictPublicBuckets: false,
+      }),
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+
+    new s3deploy.BucketDeployment(this, "FrontendDeployment", {
+      sources: [
+        s3deploy.Source.asset("frontend", {
+          exclude: ["config.js"],
+        }),
+        s3deploy.Source.data(
+          "config.js",
+          `window.APP_CONFIG = Object.freeze(${JSON.stringify(
+            {
+              apiUrl: api.url.replace(/\/$/, ""),
+              awsRegion: this.region,
+              userPoolClientId: userPoolClient.userPoolClientId,
+              demoUsername,
+            },
+            null,
+            2
+          )});\n`
+        ),
+      ],
+      destinationBucket: frontendBucket,
     });
 
     new cdk.CfnOutput(this, "ApiUrl", { value: api.url.replace(/\/$/, "") });
@@ -318,6 +373,9 @@ def handler(event, context):
     });
     new cdk.CfnOutput(this, "ReviewDecisionEndpoint", {
       value: `${api.url.replace(/\/$/, "")}/reviews/{orderId}/decision`,
+    });
+    new cdk.CfnOutput(this, "FrontendUrl", {
+      value: frontendBucket.bucketWebsiteUrl,
     });
   }
 }
