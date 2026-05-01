@@ -1,13 +1,15 @@
 version: 1
-frontend:
-  phases:
-    build:
-      commands:
-        - aws cloudformation describe-stacks --stack-name OrderProcessingFraudDetectionStack --query "Stacks[0].Outputs" --output json > stack-outputs.json
-        - STACK_OUTPUTS_FILE=stack-outputs.json node scripts/write-frontend-config.js
-  artifacts:
-    baseDirectory: frontend
-    files:
-      - "**/*"
-  cache:
-    paths: []
+applications:
+  - appRoot: .
+    frontend:
+      phases:
+        build:
+          commands:
+            - aws cloudformation describe-stacks --stack-name OrderProcessingFraudDetectionStack --query "Stacks[0].Outputs" --output json > stack-outputs.json
+            - STACK_OUTPUTS_FILE=stack-outputs.json node scripts/write-frontend-config.js
+      artifacts:
+        baseDirectory: frontend
+        files:
+          - "**/*"
+      cache:
+        paths: []
