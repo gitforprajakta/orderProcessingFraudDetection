@@ -114,15 +114,11 @@ zip -r ../frontend-static.zip index.html app.js styles.css config.js
 
 Upload `frontend-static.zip` to Amplify.
 
-For Git-based Amplify deploy, connect this repository and use `amplify.yml`. It reads the current CloudFormation stack outputs, generates `frontend/config.js`, and publishes the `frontend/` folder.
+For Git-based Amplify deploy, connect this repository and use `amplify.yml`. It publishes the `frontend/` folder from GitHub.
 
-Important: `npm run deploy` regenerates `frontend/config.js` locally from the current CDK stack outputs. For GitHub-based Amplify deploys, Amplify regenerates `frontend/config.js` during its build. If CDK creates a new API or user pool, redeploy the backend and trigger a new Amplify build. Do not commit `frontend/config.js`; it is environment-specific generated output.
+Important: `npm run deploy` regenerates `frontend/config.js` locally from the current CDK stack outputs. Commit and push the updated `frontend/config.js` after each backend redeploy so Amplify receives the latest API URL and Cognito client ID. This file contains public frontend settings only; do not put passwords or other secrets in it.
 
-The Amplify build role must have permission to read stack outputs:
-
-```text
-cloudformation:DescribeStacks
-```
+The demo password is not committed. Set it with `DEMO_USER_PASSWORD` before deployment and enter the same value in the frontend login form.
 
 ## Local Frontend
 
