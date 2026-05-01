@@ -277,12 +277,12 @@ def handler(event, context):
       "gatewayresponse.header.Access-Control-Allow-Methods": "'OPTIONS,POST'",
     };
     [
-      apigw.ResponseType.DEFAULT_4XX,
-      apigw.ResponseType.DEFAULT_5XX,
-      apigw.ResponseType.UNAUTHORIZED,
-      apigw.ResponseType.ACCESS_DENIED,
-    ].forEach((type) => {
-      api.addGatewayResponse(`${type}CorsResponse`, {
+      { id: "Default4xxCorsResponse", type: apigw.ResponseType.DEFAULT_4XX },
+      { id: "Default5xxCorsResponse", type: apigw.ResponseType.DEFAULT_5XX },
+      { id: "UnauthorizedCorsResponse", type: apigw.ResponseType.UNAUTHORIZED },
+      { id: "AccessDeniedCorsResponse", type: apigw.ResponseType.ACCESS_DENIED },
+    ].forEach(({ id, type }) => {
+      api.addGatewayResponse(id, {
         type,
         responseHeaders: gatewayCorsHeaders,
       });
