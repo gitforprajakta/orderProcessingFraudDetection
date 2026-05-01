@@ -7,16 +7,15 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="page">
-      <section class="card">
+    <main id="page" class="page auth-mode">
+      <section id="loginCard" class="card">
         <p class="eyebrow">Intelligent Event-Driven Pipeline</p>
         <h1>Order Submission Console</h1>
         <p class="subtitle">
-          Enter order details and submit once. The app signs in to Cognito,
-          calls Order Lambda, stores the order in DynamoDB, and triggers fraud scoring.
+          Sign in with the demo Cognito user before opening the order form.
         </p>
 
-        <form id="orderForm" class="form">
+        <form id="loginForm" class="form">
           <h2>Cognito Demo Login</h2>
           <div class="grid">
             <div>
@@ -29,6 +28,22 @@
             </div>
           </div>
 
+          <button type="submit" class="primary-btn" id="loginBtn">
+            Continue to Order Form
+          </button>
+          <p id="loginStatus" class="login-status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section id="orderCard" class="card" hidden>
+        <p class="eyebrow">Intelligent Event-Driven Pipeline</p>
+        <h1>Order Submission Console</h1>
+        <p class="subtitle">
+          Calls Order Lambda, stores the order in DynamoDB, and triggers fraud scoring.
+        </p>
+        <p id="signedInAs" class="signed-in"></p>
+
+        <form id="orderForm" class="form">
           <h2>Order Details</h2>
 
           <div class="grid">
@@ -78,7 +93,7 @@
 
       </section>
 
-      <section class="card output-card">
+      <section id="outputCard" class="card output-card" hidden>
         <h2>Response</h2>
         <p class="subtitle">Final order response and fraud-check hints appear here.</p>
         <pre id="output">{ "status": "ready" }</pre>
