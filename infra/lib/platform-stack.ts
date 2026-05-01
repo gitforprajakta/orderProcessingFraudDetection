@@ -184,7 +184,12 @@ export class PlatformStack extends cdk.Stack {
     });
 
     const demoUsername = "testuser";
-    const demoPassword = "YourSecurePassw0rd!";
+    const demoPassword = process.env.DEMO_USER_PASSWORD;
+    if (!demoPassword) {
+      throw new Error(
+        "Set DEMO_USER_PASSWORD before deploying so CDK can create the demo Cognito user."
+      );
+    }
     const demoUserHandler = new lambda.Function(this, "DemoUserHandler", {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "index.handler",
@@ -284,6 +289,7 @@ def handler(event, context):
     });
 
     new cdk.CfnOutput(this, "ApiUrl", { value: api.url.replace(/\/$/, "") });
+    new cdk.CfnOutput(this, "AwsRegion", { value: this.region });
     new cdk.CfnOutput(this, "CognitoUserPoolId", {
       value: userPool.userPoolId,
     });

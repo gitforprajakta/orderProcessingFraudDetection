@@ -73,14 +73,14 @@ npx cdk bootstrap aws://${AWS_ACCOUNT_ID}/${AWS_REGION}
 Deploy:
 
 ```bash
-npx cdk deploy
+export DEMO_USER_PASSWORD='<choose-a-demo-password>'
+npm run deploy
 ```
 
-CDK creates the demo Cognito user automatically:
+CDK creates the demo Cognito user automatically using the password from `DEMO_USER_PASSWORD`:
 
 ```text
 Username: testuser
-Password: YourSecurePassw0rd!
 ```
 
 Useful outputs:
@@ -109,14 +109,20 @@ For Amplify drag-and-drop deploy, upload a zip whose root contains `index.html`,
 ```bash
 rm -f frontend-static.zip
 cd frontend
-zip -r ../frontend-static.zip index.html app.js styles.css
+zip -r ../frontend-static.zip index.html app.js styles.css config.js
 ```
 
 Upload `frontend-static.zip` to Amplify.
 
-For Git-based Amplify deploy, connect this repository and use `amplify.yml`. It publishes the `frontend/` folder.
+For Git-based Amplify deploy, connect this repository and use `amplify.yml`. It reads the current CloudFormation stack outputs, generates `frontend/config.js`, and publishes the `frontend/` folder.
 
-Important: `frontend/app.js` contains the current deployed `ApiUrl`, AWS region, Cognito client ID, and demo credentials. If CDK creates a new API or user pool, update those values and redeploy the frontend.
+Important: `npm run deploy` regenerates `frontend/config.js` locally from the current CDK stack outputs. For GitHub-based Amplify deploys, Amplify regenerates `frontend/config.js` during its build. If CDK creates a new API or user pool, redeploy the backend and trigger a new Amplify build. Do not commit `frontend/config.js`; it is environment-specific generated output.
+
+The Amplify build role must have permission to read stack outputs:
+
+```text
+cloudformation:DescribeStacks
+```
 
 ## Local Frontend
 
@@ -268,8 +274,8 @@ Generated local files that should not be committed:
 | Issue | What to check |
 |-------|---------------|
 | `cdk deploy` fails | Run `npm install`, `npm run build`, then `npx cdk synth` |
-| API returns `401` | Demo Cognito user may not exist yet; run `npx cdk deploy` |
-| API returns `403` | Verify `frontend/app.js` has the latest `CognitoUserPoolClientId` |
+| API returns `401` | Demo Cognito user may not exist yet; set `DEMO_USER_PASSWORD` and run `npm run deploy` |
+| API returns `403` | Verify `frontend/config.js` has the latest `CognitoUserPoolClientId` |
 | DynamoDB stays `PENDING` | Check Fraud Lambda logs and EventBridge rule `OnOrderCreated` |
 | Browser CORS error | Redeploy backend and refresh the Amplify/local frontend |
 
@@ -386,7 +392,7 @@ export REGION=$AWS_REGION
 export USER_POOL_ID=<CognitoUserPoolId>
 export USER_POOL_CLIENT_ID=<CognitoUserPoolClientId>
 export USERNAME=testuser
-export PASSWORD='YourSecurePassw0rd!'
+export PASSWORD='<choose-a-demo-password>'
 
 aws cognito-idp admin-create-user \
   --region "$REGION" \
@@ -416,13 +422,10 @@ Open [http://localhost:8080](http://localhost:8080).
 
 Enter:
 
-- API Base URL: `ApiUrl`
-- AWS Region: `us-west-2` or your region
-- Cognito User Pool Client ID: `CognitoUserPoolClientId`
 - Username: `testuser`
-- Password: `YourSecurePassw0rd!`
+- Password: the value you deployed with `DEMO_USER_PASSWORD`
 
-Click **Get Cognito IdToken**, then click **Submit Order**.
+Click **Submit Order and Run Fraud Check**.
 
 If browser Cognito login fails, get the token from CLI and paste it into the `Cognito IdToken` box:
 
@@ -445,8 +448,8 @@ Option A, easiest manual deploy:
 3. App name: `order-processing-fraud-frontend`.
 4. Drag and drop the `frontend/` folder, or zip the contents of `frontend/` and upload it.
 5. Open the Amplify URL.
-6. Fill in `ApiUrl`, region, `CognitoUserPoolClientId`, username, and password.
-7. Click **Get Cognito IdToken**, then **Submit Order**.
+6. Enter the demo username and the password you deployed with `DEMO_USER_PASSWORD`.
+7. Click **Submit Order and Run Fraud Check**.
 
 Option B, Git-based deploy:
 
@@ -693,7 +696,7 @@ export REGION=$AWS_REGION
 export USER_POOL_ID=<CognitoUserPoolId>
 export USER_POOL_CLIENT_ID=<CognitoUserPoolClientId>
 export USERNAME=testuser
-export PASSWORD='YourSecurePassw0rd!'
+export PASSWORD='<choose-a-demo-password>'
 
 aws cognito-idp admin-create-user \
   --region "$REGION" \

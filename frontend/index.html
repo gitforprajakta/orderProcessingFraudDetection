@@ -17,6 +17,18 @@
         </p>
 
         <form id="orderForm" class="form">
+          <h2>Cognito Demo Login</h2>
+          <div class="grid">
+            <div>
+              <label for="authUsername">Username</label>
+              <input id="authUsername" name="authUsername" type="text" required />
+            </div>
+            <div>
+              <label for="authPassword">Password</label>
+              <input id="authPassword" name="authPassword" type="password" required />
+            </div>
+          </div>
+
           <h2>Order Details</h2>
 
           <div class="grid">
@@ -89,6 +101,7 @@
       </div>
     </template>
 
+    <script src="./config.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
