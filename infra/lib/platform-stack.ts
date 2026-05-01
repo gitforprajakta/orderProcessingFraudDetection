@@ -52,7 +52,7 @@ export class PlatformStack extends cdk.Stack {
 
     const reviewQueue = new sqs.Queue(this, "ReviewRequestsQueue", {
       queueName: "ReviewRequestsQueue",
-      visibilityTimeout: cdk.Duration.seconds(30),
+      visibilityTimeout: cdk.Duration.hours(1),
       retentionPeriod: cdk.Duration.days(4),
     });
 
