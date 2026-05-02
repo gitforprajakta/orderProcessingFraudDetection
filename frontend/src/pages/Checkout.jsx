@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useCart } from "../cart/CartContext.jsx";
 import { ordersApi } from "../api/orders.js";
+import ProductImage from "../components/ProductImage.jsx";
 
 const COUNTRIES = [
   { code: "US", label: "United States (lower risk)" },
@@ -124,7 +125,7 @@ export default function Checkout() {
         <h2>Order summary</h2>
         {items.map((it) => (
           <div className="checkout-item" key={it.sku}>
-            <img src={it.imageUrl} alt={it.name} />
+            <ProductImage url={it.imageUrl} alt={it.name} />
             <div>
               <strong>{it.name}</strong>
               <small>

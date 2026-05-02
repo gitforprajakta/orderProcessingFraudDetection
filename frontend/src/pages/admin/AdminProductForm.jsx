@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { productsApi } from "../../api/products.js";
 import { adminApi } from "../../api/admin.js";
+import ProductImage from "../../components/ProductImage.jsx";
+import { isHeicOrHeifUrl } from "../../utils/productImage.js";
 
 const EMPTY = {
   sku: "",
@@ -10,7 +12,7 @@ const EMPTY = {
   category: "electronics",
   price: 0,
   currency: "USD",
-  stock: 0,
+  stock: 1,
   imageUrl: "",
 };
 
@@ -23,11 +25,13 @@ export default function AdminProductForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadInfo, setUploadInfo] = useState("");
 
   useEffect(() => {
     if (!editing) return;
-    productsApi
-      .get(sku)
+    adminApi
+      .getProduct(sku)
+      .catch(() => productsApi.get(sku))
       .then((data) => setForm({ ...EMPTY, ...data }))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -66,6 +70,14 @@ export default function AdminProductForm() {
 
   const handleUpload = async (file) => {
     setError("");
+    setUploadInfo("");
+    const name = file.name || "";
+    if (/\.(heic|heif)$/i.test(name)) {
+      setError(
+        "HEIC/HEIF cannot be displayed in the web catalog (browsers do not support it). Export the photo as JPEG or PNG (on iPhone: Settings → Camera → Formats → Most Compatible), then upload again."
+      );
+      return;
+    }
     setUploading(true);
     try {
       const { uploadUrl, publicUrl } = await adminApi.requestImageUpload(
@@ -74,8 +86,9 @@ export default function AdminProductForm() {
       );
       await adminApi.uploadToS3(uploadUrl, file);
       update("imageUrl", publicUrl);
+      setUploadInfo(`Image uploaded to S3: ${publicUrl}`);
     } catch (err) {
-      setError(err.message);
+      setError(`Image upload failed: ${err.message}`);
     } finally {
       setUploading(false);
     }
@@ -162,18 +175,35 @@ export default function AdminProductForm() {
           Or upload an image to S3
           <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) handleUpload(file);
+              e.target.value = "";
             }}
             disabled={uploading}
           />
         </label>
+        <p className="hint">
+          iPhone photos are often HEIC — those do not show in browsers. Use JPEG
+          or PNG for catalog images.
+        </p>
         {uploading && <div className="alert info">Uploading to S3…</div>}
-        {form.imageUrl && (
+        {uploadInfo && <div className="alert success">{uploadInfo}</div>}
+        {form.imageUrl?.trim() ? (
           <div className="image-preview">
-            <img src={form.imageUrl} alt="preview" />
+            <ProductImage url={form.imageUrl} alt="preview" loading="eager" />
+            {isHeicOrHeifUrl(form.imageUrl) && (
+              <div className="alert info" style={{ marginTop: 10 }}>
+                This URL points to a HEIC file. Browsers cannot render it — edit
+                the product and upload JPEG or PNG instead.
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="hint">
+            No image set. Paste a public URL or upload JPEG/PNG/WebP — HEIC
+            (iPhone default) will not display on the site.
           </div>
         )}
 

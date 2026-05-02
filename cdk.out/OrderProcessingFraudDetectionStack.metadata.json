@@ -413,24 +413,6 @@
       "data": "CDKMetadataAvailable"
     }
   ],
-  "/OrderProcessingFraudDetectionStack/OrderNotificationsTopic/saikaran.akula@sjsu.edu/Resource": [
-    {
-      "type": "aws:cdk:logicalId",
-      "data": "OrderNotificationsTopicsaikaranakulasjsuedu91BEB590"
-    }
-  ],
-  "/OrderProcessingFraudDetectionStack/OrderNotificationsTopic/srikavya.gelli@sjsu.edu/Resource": [
-    {
-      "type": "aws:cdk:logicalId",
-      "data": "OrderNotificationsTopicsrikavyagellisjsuedu7D94CEB3"
-    }
-  ],
-  "/OrderProcessingFraudDetectionStack/OrderNotificationsTopic/prajaktajivanrao.ketkar@sjsu.edu/Resource": [
-    {
-      "type": "aws:cdk:logicalId",
-      "data": "OrderNotificationsTopicprajaktajivanraoketkarsjsueduDEA2845B"
-    }
-  ],
   "/OrderProcessingFraudDetectionStack/ReviewQueueDLQ/Policy/Resource": [
     {
       "type": "aws:cdk:logicalId",
@@ -554,7 +536,7 @@
   "/OrderProcessingFraudDetectionStack/OrdersApi/Deployment/Resource": [
     {
       "type": "aws:cdk:logicalId",
-      "data": "OrdersApiDeployment7E959249338863afef6c53942b845f073479cc2d"
+      "data": "OrdersApiDeployment7E9592498609ed5a2fc5c015b8a8ade85c5e26b3"
     }
   ],
   "/OrderProcessingFraudDetectionStack/OrdersApi/DeploymentStage.prod/Resource": [
@@ -845,6 +827,24 @@
       "data": "OrdersApiadminreviewqueueDBEF0FE5"
     }
   ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/stats/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminstatsA24FD52A"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersC95622EF"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsFBC59924"
+    }
+  ],
   "/OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/OPTIONS/Resource": [
     {
       "type": "aws:cdk:logicalId",
@@ -1031,6 +1031,90 @@
       "data": "OrdersApiadminreviewqueueGETC56EB678"
     }
   ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/stats/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminstatsOPTIONS69E32FB1"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/stats/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.stats": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminstatsGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminstats2D0578F0"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/stats/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.stats": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminstatsGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminstatsFD2D154C"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/stats/GET/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminstatsGET8D3FD29D"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersOPTIONSAC669F13"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.users": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminusersC5085BB2"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.users": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminusers5E45EFC1"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/GET/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersGET3760CB4C"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusername88081681"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsOPTIONSAE26F5EA"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.products": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminproductsF2708DE9"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.products": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminproducts1A4B63C0"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/GET/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsGETDC0B01E0"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/{sku}/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsskuA33DDA37"
+    }
+  ],
   "/OrderProcessingFraudDetectionStack/OrdersApi/Default/uploads/product-image/OPTIONS/Resource": [
     {
       "type": "aws:cdk:logicalId",
@@ -1127,10 +1211,70 @@
       "data": "OrdersApiadminordersorderIdOPTIONS963A2061"
     }
   ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.orders.{orderId}": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminordersorderIdGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminordersorderIdAC4E3192"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.orders.{orderId}": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminordersorderIdGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminordersorderId6B0FC066"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/GET/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminordersorderIdGET20D10EDB"
+    }
+  ],
   "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/decision/Resource": [
     {
       "type": "aws:cdk:logicalId",
       "data": "OrdersApiadminordersorderIddecisionE0DFADAF"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernameOPTIONSE083D333"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/group/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernamegroup9179C465"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/enabled/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernameenabled41CE2056"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/{sku}/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsskuOPTIONSE655F974"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/{sku}/GET/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.products.{sku}": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsskuGETApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminproductssku8A50D7D0"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/{sku}/GET/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.GET..admin.products.{sku}": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsskuGETApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDGETadminproductssku4CA8F7D4"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/products/{sku}/GET/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminproductsskuGETB096C4B7"
     }
   ],
   "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/orders/{orderId}/decision/OPTIONS/Resource": [
@@ -1155,6 +1299,54 @@
     {
       "type": "aws:cdk:logicalId",
       "data": "OrdersApiadminordersorderIddecisionPOST8E0AE6F1"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/group/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernamegroupOPTIONS07BE70D0"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/group/POST/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..admin.users.{username}.group": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernamegroupPOSTApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTadminusersusernamegroupFC062167"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/group/POST/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..admin.users.{username}.group": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernamegroupPOSTApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTadminusersusernamegroup8BB63A22"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/group/POST/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernamegroupPOST222C2D5A"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/enabled/OPTIONS/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernameenabledOPTIONS6E7573EF"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/enabled/POST/ApiPermission.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..admin.users.{username}.enabled": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernameenabledPOSTApiPermissionOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTadminusersusernameenabled86305797"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/enabled/POST/ApiPermission.Test.OrderProcessingFraudDetectionStackOrdersApiD13F4FDD.POST..admin.users.{username}.enabled": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernameenabledPOSTApiPermissionTestOrderProcessingFraudDetectionStackOrdersApiD13F4FDDPOSTadminusersusernameenabled75FFA0B9"
+    }
+  ],
+  "/OrderProcessingFraudDetectionStack/OrdersApi/Default/admin/users/{username}/enabled/POST/Resource": [
+    {
+      "type": "aws:cdk:logicalId",
+      "data": "OrdersApiadminusersusernameenabledPOST2AB537D6"
     }
   ]
 }

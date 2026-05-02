@@ -236,6 +236,8 @@ export class PlatformStack extends cdk.Stack {
       },
     });
 
+    // Admin lambda — also needs USER_POOL_ID, but Cognito is created later in
+    // the stack. We set it via addEnvironment() once the pool exists.
     const adminLambda = new lambda.Function(this, "AdminLambda", {
       functionName: adminLambdaName,
       runtime: commonRuntime,
@@ -247,6 +249,8 @@ export class PlatformStack extends cdk.Stack {
         PRODUCTS_TABLE_NAME: productsTable.tableName,
         EVENT_BUS_NAME: bus.eventBusName,
         ADMIN_GROUP: "admins",
+        CUSTOMER_GROUP: "customers",
+        LOW_STOCK_THRESHOLD: "5",
         REVIEW_QUEUE_URL: reviewQueue.queueUrl,
       },
     });
@@ -417,6 +421,25 @@ export class PlatformStack extends cdk.Stack {
       description: "Regular shoppers (default group)",
       precedence: 10,
     });
+
+    // Admin lambda needs to know which user pool to manage and the
+    // permission to call the AdminUser* APIs.
+    adminLambda.addEnvironment("USER_POOL_ID", userPool.userPoolId);
+    adminLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "cognito-idp:ListUsers",
+          "cognito-idp:ListUsersInGroup",
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:AdminEnableUser",
+          "cognito-idp:AdminDisableUser",
+        ],
+        resources: [userPool.userPoolArn],
+      })
+    );
 
     // -----------------------------------------------------------------------
     // Custom resource Lambda: create demo customer + demo admin users
@@ -751,15 +774,35 @@ def handler(event, context):
     // ----- /admin (admin-only, enforced by Lambda)
     const admin = api.root.addResource("admin");
     const adminIntegration = new apigw.LambdaIntegration(adminLambda);
+
     const adminOrders = admin.addResource("orders");
     adminOrders.addMethod("GET", adminIntegration, authMethodOpts);
-    adminOrders
-      .addResource("{orderId}")
+    const adminOrderById = adminOrders.addResource("{orderId}");
+    adminOrderById.addMethod("GET", adminIntegration, authMethodOpts);
+    adminOrderById
       .addResource("decision")
       .addMethod("POST", adminIntegration, authMethodOpts);
 
     admin
       .addResource("review-queue")
+      .addMethod("GET", adminIntegration, authMethodOpts);
+
+    admin.addResource("stats").addMethod("GET", adminIntegration, authMethodOpts);
+
+    const adminUsers = admin.addResource("users");
+    adminUsers.addMethod("GET", adminIntegration, authMethodOpts);
+    const adminUserByName = adminUsers.addResource("{username}");
+    adminUserByName
+      .addResource("group")
+      .addMethod("POST", adminIntegration, authMethodOpts);
+    adminUserByName
+      .addResource("enabled")
+      .addMethod("POST", adminIntegration, authMethodOpts);
+
+    const adminProducts = admin.addResource("products");
+    adminProducts.addMethod("GET", adminIntegration, authMethodOpts);
+    adminProducts
+      .addResource("{sku}")
       .addMethod("GET", adminIntegration, authMethodOpts);
 
     // ----- /uploads/product-image (admin-only, presigned PUT)

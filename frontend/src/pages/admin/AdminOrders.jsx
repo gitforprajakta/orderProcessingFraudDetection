@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { adminApi } from "../../api/admin.js";
 
 const STATUS_CLASS = {
@@ -90,7 +91,11 @@ export default function AdminOrders() {
           <tbody>
             {orders.map((o) => (
               <tr key={o.orderId}>
-                <td className="mono">{o.orderId.slice(0, 8)}…</td>
+                <td className="mono">
+                  <Link to={`/admin/orders/${encodeURIComponent(o.orderId)}`}>
+                    {o.orderId.slice(0, 8)}…
+                  </Link>
+                </td>
                 <td>{o.userEmail || o.userId?.slice(0, 8) || "—"}</td>
                 <td>{formatDate(o.createdAt)}</td>
                 <td>${Number(o.orderTotal || 0).toFixed(2)}</td>

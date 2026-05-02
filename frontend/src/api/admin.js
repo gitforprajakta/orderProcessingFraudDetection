@@ -6,6 +6,8 @@ export const adminApi = {
       auth: true,
       query: status ? { status } : undefined,
     }),
+  getOrder: (orderId) =>
+    apiFetch(`/admin/orders/${encodeURIComponent(orderId)}`, { auth: true }),
   decideOrder: (orderId, decision, receiptHandle) =>
     apiFetch(
       `/admin/orders/${encodeURIComponent(orderId)}/decision`,
@@ -19,6 +21,31 @@ export const adminApi = {
     ),
   listReviewQueue: () =>
     apiFetch("/admin/review-queue", { auth: true }),
+
+  stats: () => apiFetch("/admin/stats", { auth: true }),
+
+  listProducts: () => apiFetch("/admin/products", { auth: true }),
+  getProduct: (sku) =>
+    apiFetch(`/admin/products/${encodeURIComponent(sku)}`, { auth: true }),
+
+  listUsers: (paginationToken) =>
+    apiFetch("/admin/users", {
+      auth: true,
+      query: paginationToken ? { paginationToken } : undefined,
+    }),
+  setUserGroup: (username, groupName, action) =>
+    apiFetch(`/admin/users/${encodeURIComponent(username)}/group`, {
+      method: "POST",
+      auth: true,
+      body: { groupName, action },
+    }),
+  setUserEnabled: (username, enabled) =>
+    apiFetch(`/admin/users/${encodeURIComponent(username)}/enabled`, {
+      method: "POST",
+      auth: true,
+      body: { enabled },
+    }),
+
   requestImageUpload: (filename, contentType) =>
     apiFetch("/uploads/product-image", {
       method: "POST",

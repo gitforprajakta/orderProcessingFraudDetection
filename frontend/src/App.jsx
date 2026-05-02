@@ -15,10 +15,13 @@ import Checkout from "./pages/Checkout.jsx";
 import MyOrders from "./pages/MyOrders.jsx";
 import OrderDetail from "./pages/OrderDetail.jsx";
 import AdminLayout from "./pages/admin/AdminLayout.jsx";
+import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import AdminInventory from "./pages/admin/AdminInventory.jsx";
 import AdminProductForm from "./pages/admin/AdminProductForm.jsx";
 import AdminOrders from "./pages/admin/AdminOrders.jsx";
+import AdminOrderDetail from "./pages/admin/AdminOrderDetail.jsx";
 import AdminReviewQueue from "./pages/admin/AdminReviewQueue.jsx";
+import AdminUsers from "./pages/admin/AdminUsers.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
 export default function App() {
@@ -75,12 +78,15 @@ export default function App() {
               </AdminRoute>
             }
           >
-            <Route index element={<Navigate to="inventory" replace />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="inventory" element={<AdminInventory />} />
             <Route path="inventory/new" element={<AdminProductForm />} />
             <Route path="inventory/:sku" element={<AdminProductForm />} />
             <Route path="orders" element={<AdminOrders />} />
+            <Route path="orders/:orderId" element={<AdminOrderDetail />} />
             <Route path="review-queue" element={<AdminReviewQueue />} />
+            <Route path="users" element={<AdminUsers />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

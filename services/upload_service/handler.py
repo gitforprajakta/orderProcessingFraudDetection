@@ -70,6 +70,14 @@ def handler(event, context):
         return _resp(400, {"message": "Invalid JSON"})
 
     filename = _safe_filename(str(body.get("filename", "")))
+    if filename.lower().endswith((".heic", ".heif")):
+        return _resp(
+            400,
+            {
+                "message": "HEIC/HEIF is not supported in web browsers. "
+                "Please upload JPEG, PNG, or WebP."
+            },
+        )
     content_type = str(body.get("contentType", "")).strip() or "image/jpeg"
 
     if not content_type.startswith("image/"):

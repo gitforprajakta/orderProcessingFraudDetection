@@ -715,3 +715,114 @@ textarea {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
 }
+
+/* ---------- Role tabs (login) ---------- */
+.role-tabs {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 4px;
+  margin: 16px 0 20px;
+}
+.role-tab {
+  flex: 1;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #475569;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.role-tab.active {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+.role-tab:focus-visible {
+  outline: 2px solid #2563eb55;
+}
+
+.checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #475569;
+  white-space: nowrap;
+}
+
+/* ---------- Dashboard ---------- */
+.admin-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.stat-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-label {
+  color: #64748b;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.stat-sub {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+.stat-grid-secondary {
+  align-items: stretch;
+}
+.status-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.status-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.status-list li strong {
+  font-size: 1.1rem;
+}
+
+.row-inactive {
+  background: #f8fafc;
+  color: #64748b;
+}
+.row-inactive td {
+  color: inherit;
+}
+
+.text-warning {
+  color: #b45309;
+  font-weight: 600;
+}
+.text-danger {
+  color: #b91c1c;
+  font-weight: 600;
+}

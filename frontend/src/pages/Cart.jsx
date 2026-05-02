@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../cart/CartContext.jsx";
+import ProductImage from "../components/ProductImage.jsx";
 
 export default function Cart() {
   const { cart, setItem, removeItem, clear, loading } = useCart();
@@ -28,7 +29,11 @@ export default function Cart() {
       <div className="cart-table">
         {items.map((it) => (
           <div className="cart-row" key={it.sku}>
-            <img src={it.imageUrl} alt={it.name} className="cart-thumb" />
+            <ProductImage
+              url={it.imageUrl}
+              alt={it.name}
+              className="cart-thumb"
+            />
             <div className="cart-row-info">
               <Link to={`/products/${encodeURIComponent(it.sku)}`}>
                 {it.name}

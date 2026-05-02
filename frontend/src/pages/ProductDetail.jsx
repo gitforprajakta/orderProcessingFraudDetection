@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { productsApi } from "../api/products.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { useCart } from "../cart/CartContext.jsx";
+import ProductImage from "../components/ProductImage.jsx";
 
 export default function ProductDetail() {
   const { sku } = useParams();
@@ -58,7 +59,7 @@ export default function ProductDetail() {
       </Link>
       <div className="product-detail">
         <div className="product-detail-image">
-          <img src={product.imageUrl} alt={product.name} />
+          <ProductImage url={product.imageUrl} alt={product.name} loading="eager" />
         </div>
         <div className="product-detail-body">
           <span className="product-category">{product.category}</span>

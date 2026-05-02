@@ -57,6 +57,127 @@ S3 (product images) ◄── public read for catalog images
 You can also sign up new accounts from the React app — verification emails are
 sent automatically by Cognito.
 
+The login page exposes two tabs at the top:
+
+- **Customer** — for shoppers. Sign-in lands on the catalog. If the account
+  happens to be in the `admins` group, the page redirects to the admin
+  console.
+- **Administrator** — for admin sign-in. After sign-in, the app verifies the
+  account is in the `admins` Cognito group. If it isn't, the user is signed
+  out and shown an explanatory error.
+
+The toggle is purely a UX/redirection hint; the real authority is the
+`cognito:groups` claim in the ID token, which both API Gateway / Lambda and
+the React `AdminRoute` enforce.
+
+## Setting up admin accounts
+
+Authority for "admin" comes from membership in the Cognito user pool group
+named `admins`. There are five supported ways to create or grant admin
+access — pick whichever fits your situation.
+
+### Option A — use the auto-created demo admin
+
+`cdk deploy` always creates `admin@example.com` / `AdminPassw0rd!` and adds
+it to the `admins` group. Use this for the demo, then change or rotate the
+credentials in production (see Option E).
+
+### Option B — promote an existing user from the admin console
+
+1. Sign in as any existing admin (e.g. the demo admin).
+2. Open **Admin → Users**.
+3. Find the user, click **Promote to admin**.
+4. They will be in the `admins` group on their next token refresh / sign-in.
+
+This is the everyday path once you have at least one bootstrapped admin.
+
+### Option C — promote a user with the AWS CLI
+
+Useful when no admin exists yet, or you're scripting onboarding.
+
+```bash
+export USER_POOL_ID=$(aws cloudformation describe-stacks \
+  --stack-name OrderProcessingFraudDetectionStack \
+  --query "Stacks[0].Outputs[?OutputKey=='CognitoUserPoolId'].OutputValue" \
+  --output text)
+
+aws cognito-idp admin-add-user-to-group \
+  --user-pool-id "$USER_POOL_ID" \
+  --username "alice@example.com" \
+  --group-name admins
+```
+
+To remove admin access:
+
+```bash
+aws cognito-idp admin-remove-user-from-group \
+  --user-pool-id "$USER_POOL_ID" \
+  --username "alice@example.com" \
+  --group-name admins
+```
+
+### Option D — promote a user from the AWS Console
+
+1. AWS Console → **Cognito** → User pools → select the NimbusMart pool
+   (the `CognitoUserPoolId` output).
+2. **Users** tab → click the user you want to promote.
+3. **Group memberships** → **Add user to group** → pick `admins`.
+4. Save. The user must sign in (or refresh their session) to pick up the
+   new claim.
+
+### Option E — bootstrap a brand-new admin from scratch (CLI)
+
+Creates the user, sets a permanent password, marks the email verified, and
+adds them to `admins`:
+
+```bash
+export USER_POOL_ID=$(aws cloudformation describe-stacks \
+  --stack-name OrderProcessingFraudDetectionStack \
+  --query "Stacks[0].Outputs[?OutputKey=='CognitoUserPoolId'].OutputValue" \
+  --output text)
+export ADMIN_EMAIL="alice@example.com"
+export ADMIN_PASSWORD='ChangeMe-Now-1!'
+
+aws cognito-idp admin-create-user \
+  --user-pool-id "$USER_POOL_ID" \
+  --username "$ADMIN_EMAIL" \
+  --user-attributes Name=email,Value="$ADMIN_EMAIL" Name=email_verified,Value=true \
+  --message-action SUPPRESS
+
+aws cognito-idp admin-set-user-password \
+  --user-pool-id "$USER_POOL_ID" \
+  --username "$ADMIN_EMAIL" \
+  --password "$ADMIN_PASSWORD" \
+  --permanent
+
+aws cognito-idp admin-add-user-to-group \
+  --user-pool-id "$USER_POOL_ID" \
+  --username "$ADMIN_EMAIL" \
+  --group-name admins
+```
+
+Hand the email and password to your new admin out-of-band — they should
+log in via the **Administrator** tab on the login page.
+
+### (Optional) subscribe new admins to SNS notifications
+
+Admin order-decision emails (`APPROVE` / `BLOCK` / `REVIEW`) come from the
+SNS topic `OrderNotificationsTopic`. To add a new admin's mailbox:
+
+```bash
+export TOPIC_ARN=$(aws cloudformation describe-stacks \
+  --stack-name OrderProcessingFraudDetectionStack \
+  --query "Stacks[0].Outputs[?OutputKey=='OrderNotificationsTopicArn'].OutputValue" \
+  --output text)
+
+aws sns subscribe \
+  --topic-arn "$TOPIC_ARN" \
+  --protocol email \
+  --notification-endpoint alice@example.com
+```
+
+The subscriber must click the confirmation email AWS sends.
+
 ## Repository layout
 
 ```
@@ -257,24 +378,75 @@ deterministic regardless of model drift.
 
 ## 6. Admin workflow
 
-1. Sign in as `admin@example.com` (`AdminPassw0rd!`).
-2. Click **Admin** in the navbar.
-3. **Inventory** tab — add, edit, soft-delete products, upload images to S3
-   directly from the form.
-4. **Orders** tab — filter by status (default `REVIEW`), click **Approve** or
-   **Block** to override fraud decisions. Block events automatically restore
-   stock via `stock_restore_service`.
-5. **Review Queue** tab — every order the fraud model marks as `REVIEW` is
-   pushed onto the `OrderReviewQueue` SQS queue, and an SNS email goes out
-   to all subscribed admins. The first admin to open this tab pulls the
-   message (visibility timeout makes it temporarily invisible to the others
-   to avoid double-handling) and clicks **Approve** or **Block**. That:
+1. Sign in via the **Administrator** tab on the login page using
+   `admin@example.com` / `AdminPassw0rd!`.
+2. You'll be redirected to the admin console (`/admin`).
 
-   - Updates the order's `status` in DynamoDB
-   - Emits an `OrderApproved` / `OrderBlocked` EventBridge event (which
-     triggers another SNS email and, for Block, the stock-restore Lambda)
-   - **Deletes the message from the SQS queue** using the receipt handle
-     returned by `GET /admin/review-queue`
+The admin console has five tabs:
+
+### Dashboard
+At-a-glance metrics from `GET /admin/stats`:
+
+- Total orders, orders in the last 7 days
+- Approved revenue and average approved order value
+- Active vs archived product counts
+- Customer / admin counts (from Cognito groups)
+- Orders broken down by `PENDING` / `REVIEW` / `APPROVE` / `BLOCK`
+- Low-stock alerts (active products with stock ≤ `LOW_STOCK_THRESHOLD`,
+  default 5; deep-links to the edit form)
+
+### Inventory
+Full product catalog management — including archived items.
+
+- **+ New product** to create a new SKU
+- **Search** by name, SKU, or category
+- **Show archived** to include soft-deleted products
+- **Edit** any product (active or archived)
+- **Delete** soft-deletes (`active=false`); the product disappears from the
+  public catalog but remains in DynamoDB and the order history
+- **Restore** brings an archived product back (`active=true`)
+- The product form includes a built-in S3 image uploader (presigned PUT)
+
+Stock numbers are color-coded — orange when ≤ 5, red when 0.
+
+### Orders
+Every order, regardless of who placed it.
+
+- Filter by status (default `REVIEW`)
+- Click any order ID to open its admin detail page (full items, shipping,
+  customer info, fraud score, model version, manual-decision controls)
+- For `REVIEW`/`PENDING` orders, **Approve** or **Block** records an
+  `adminOverride`, emits an `OrderApproved`/`OrderBlocked` EventBridge
+  event, fires another SNS email, and (for blocks) restores stock via
+  `stock_restore_service`
+
+### Review Queue
+SQS-backed queue of orders the fraud model flagged as `REVIEW`.
+
+- Every `REVIEW` order is pushed to the `OrderReviewQueue` SQS queue and
+  an SNS email goes out to all subscribed admins.
+- Opening this tab calls `receive_message` with a 30-second visibility
+  timeout, so an order claimed by one admin is briefly invisible to the
+  other admins — avoiding double-processing.
+- **Approve** / **Block** does three things atomically:
+  1. Updates the order's `status` in DynamoDB.
+  2. Emits an `OrderApproved` / `OrderBlocked` EventBridge event (which
+     triggers another SNS email and, for `Block`, the stock-restore
+     Lambda).
+  3. **Deletes the SQS message** using the receipt handle returned by
+     `GET /admin/review-queue`.
+
+### Users
+Cognito user-pool management.
+
+- Lists every user with email, status (`enabled`/`disabled` +
+  `CONFIRMED`/`UNCONFIRMED`), group memberships, and creation time
+- **Promote to admin** / **Demote** — adds or removes the `admins` group
+  membership for a user
+- **Disable** / **Enable** — toggles `Enabled` on the Cognito user (a
+  disabled user can't sign in but their data is preserved)
+- You cannot demote or disable yourself (the API blocks it server-side
+  too, so you can't lock the org out by accident)
 
 ## 7. SNS email subscriptions for the three admins
 
@@ -350,15 +522,25 @@ Customer-authenticated:
 Admin-only (`cognito:groups` must contain `admins`):
 
 - `POST   /products`                 create product
-- `PUT    /products/{sku}`           update product
-- `DELETE /products/{sku}`           soft-delete product
+- `PUT    /products/{sku}`           update product (use `{ "active": true }` to restore)
+- `DELETE /products/{sku}`           soft-delete product (sets `active=false`)
+- `GET    /admin/products`           list ALL products (active + archived)
+- `GET    /admin/products/{sku}`     single product (returns archived items too)
 - `GET    /admin/orders`             list all orders (`?status=` filter)
+- `GET    /admin/orders/{id}`        single order (full admin view)
 - `POST   /admin/orders/{id}/decision` `{decision: "APPROVE" | "BLOCK", receiptHandle?: string}`
   – when `receiptHandle` is present (returned by `/admin/review-queue`),
   the matching message is deleted from the SQS queue.
 - `GET    /admin/review-queue`       pull pending REVIEW messages from SQS
   (`?max=1..10`, default 10). Each entry includes `receiptHandle`,
   `orderId`, `score`, and the order record from DynamoDB.
+- `GET    /admin/stats`              dashboard metrics (orders by status,
+  revenue, low-stock products, customer/admin counts)
+- `GET    /admin/users`              list Cognito users (`?paginationToken=`,
+  `?limit=` up to 60). Each entry includes `username`, `email`, `enabled`,
+  `status`, `groups`, `createdAt`.
+- `POST   /admin/users/{username}/group`   `{ "groupName": "admins"|"customers", "action": "add"|"remove" }`
+- `POST   /admin/users/{username}/enabled` `{ "enabled": true | false }`
 - `POST   /uploads/product-image`    presigned S3 PUT URL for `{filename, contentType}`
 
 ## Troubleshooting

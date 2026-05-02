@@ -35,13 +35,16 @@ export function AuthProvider({ children }) {
         : groupsClaim
         ? [groupsClaim]
         : [];
-      setUser({
+      const next = {
         username: current.username,
         email: claims.email || current.signInDetails?.loginId || "",
         groups,
-      });
+      };
+      setUser(next);
+      return next;
     } catch {
       setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }

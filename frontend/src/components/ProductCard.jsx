@@ -1,23 +1,17 @@
 import { Link } from "react-router-dom";
+import ProductImage from "./ProductImage.jsx";
 
 export default function ProductCard({ product, onAdd, addingDisabled }) {
   const lowStock = (product.stock ?? 0) > 0 && (product.stock ?? 0) <= 5;
   const outOfStock = (product.stock ?? 0) <= 0;
+
   return (
     <article className="product-card">
       <Link
         to={`/products/${encodeURIComponent(product.sku)}`}
         className="product-thumb"
       >
-        <img
-          src={product.imageUrl}
-          alt={product.name}
-          loading="lazy"
-          onError={(e) => {
-            e.currentTarget.src =
-              "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='100%' height='100%' fill='%23f1f5f9'/><text x='50%' y='50%' text-anchor='middle' fill='%2364748b' font-family='sans-serif'>No image</text></svg>";
-          }}
-        />
+        <ProductImage url={product.imageUrl} alt={product.name} />
       </Link>
       <div className="product-body">
         <span className="product-category">{product.category}</span>
