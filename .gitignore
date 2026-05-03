@@ -1,4 +1,5 @@
 # ---------- Node / npm ----------
+# If these were ever committed, run: git rm -r --cached node_modules cdk.out infra/dist
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -7,7 +8,9 @@ pnpm-debug.log*
 .pnpm-store/
 
 # ---------- AWS CDK / TypeScript ----------
+# Synth output and asset zips — never commit (regenerate with `cdk synth`)
 cdk.out/
+.cdk.staging/
 cdk.context.json
 *.js.map
 infra/dist/
