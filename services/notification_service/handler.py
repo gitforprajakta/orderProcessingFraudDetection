@@ -21,15 +21,20 @@ def handler(event, context):
     else:
         subject = f"Order decision: {detail_type}"
 
-    msg = {
-        "event": detail_type,
-        "detail": detail,
-    }
+    msg = "\n".join(
+        [
+            f"Event: {detail_type}",
+            f"Order ID: {order_id}",
+            "",
+            "Details:",
+            json.dumps(detail, indent=2),
+        ]
+    )
 
     sns.publish(
         TopicArn=topic_arn,
         Subject=subject,
-        Message=json.dumps(msg),
+        Message=msg,
     )
 
     # Also return for easy troubleshooting in Lambda logs.

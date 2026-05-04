@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Review</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page review-page">
+      <section class="card">
+        <p class="eyebrow">Manual Fraud Review</p>
+        <h1>Approve or Reject Order</h1>
+        <p class="subtitle">
+          Opened from the SNS review email. Confirm the order, sign in, and choose the final decision.
+        </p>
+
+        <form id="reviewForm" class="form">
+          <label for="reviewOrderId">Order ID</label>
+          <input id="reviewOrderId" name="reviewOrderId" type="text" required />
+          <p class="helper-text">Loaded from the email link. You can paste it manually if needed.</p>
+
+          <div class="grid">
+            <div>
+              <label for="authUsername">Username</label>
+              <input id="authUsername" name="authUsername" type="text" required />
+            </div>
+            <div>
+              <label for="authPassword">Password</label>
+              <input id="authPassword" name="authPassword" type="password" required />
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button type="submit" class="primary-btn action-btn" id="approveBtn" value="APPROVE">
+              Approve
+            </button>
+            <button type="submit" class="danger-btn action-btn" id="rejectBtn" value="BLOCK">
+              Reject
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card output-card">
+        <h2>Review Result</h2>
+        <p class="subtitle">DynamoDB and SQS update status appears here.</p>
+        <pre id="output">{ "status": "ready" }</pre>
+        <a class="text-link compact-link" href="./index.html">Back to order console</a>
+      </section>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./review.js"></script>
+  </body>
+</html>

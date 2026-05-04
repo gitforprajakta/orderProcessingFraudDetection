@@ -8,6 +8,8 @@
   --accent: #73a5ff;
   --accent-strong: #4c88f7;
   --danger: #ef5b5b;
+  --success: #78d99f;
+  --warning: #f4c76b;
 }
 
 * {
@@ -41,12 +43,33 @@ body {
   grid-template-columns: 1fr;
 }
 
+.page.review-page {
+  max-width: 1080px;
+  grid-template-columns: 1fr 1fr;
+}
+
 .card {
   background: rgba(16, 23, 36, 0.92);
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: 1.2rem;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.hero-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-card::after {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(115, 165, 255, 0.18), transparent 65%);
+  pointer-events: none;
 }
 
 .eyebrow {
@@ -78,6 +101,54 @@ h2 {
   color: #ffc7c7;
 }
 
+.status-pill {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 0.8rem;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid rgba(120, 217, 159, 0.45);
+  border-radius: 999px;
+  color: var(--success);
+  background: rgba(120, 217, 159, 0.08);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.helper-text {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.field-card {
+  padding: 0.8rem;
+  border: 1px solid #26364f;
+  border-radius: 12px;
+  background: rgba(9, 16, 28, 0.55);
+}
+
+.field-card input {
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+.text-link {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0.2rem 0 0.8rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+.compact-link {
+  margin-bottom: 0;
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -103,6 +174,12 @@ button {
   color: var(--text);
   padding: 0.62rem 0.75rem;
   font-size: 0.95rem;
+}
+
+.form input,
+.form select,
+.form textarea {
+  width: 100%;
 }
 
 textarea {
@@ -171,6 +248,22 @@ button {
   color: #ffc7c7;
 }
 
+.action-btn {
+  min-height: 46px;
+  font-size: 1rem;
+}
+
+.danger-btn.action-btn {
+  border-color: var(--danger);
+  background: linear-gradient(180deg, #663030, #3d1f1f);
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
 .output-card pre {
   margin: 0.6rem 0 0;
   background: #09101c;
@@ -180,6 +273,15 @@ button {
   overflow-x: auto;
   min-height: 260px;
   font-size: 0.88rem;
+  white-space: pre-wrap;
+}
+
+.review-page .card {
+  min-width: 0;
+}
+
+.review-page .output-card pre {
+  min-height: 330px;
 }
 
 @media (max-width: 900px) {

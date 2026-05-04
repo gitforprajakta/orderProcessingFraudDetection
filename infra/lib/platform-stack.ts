@@ -40,7 +40,7 @@ export class PlatformStack extends cdk.Stack {
       if (email && email.includes("@")) {
         topic.addSubscription(
           new subscriptions.EmailSubscription(email, {
-            json: true,
+            json: false,
           })
         );
       } else {
@@ -86,6 +86,7 @@ export class PlatformStack extends cdk.Stack {
         EVENT_BUS_NAME: bus.eventBusName,
         ORDERS_TABLE_NAME: ordersTable.tableName,
         REVIEW_QUEUE_URL: reviewQueue.queueUrl,
+        SNS_TOPIC_ARN: topic.topicArn,
         MODEL_ARTIFACT_DIR: "artifacts",
         APPROVE_THRESHOLD: "0.30",
         BLOCK_THRESHOLD: "0.70",
@@ -135,6 +136,7 @@ export class PlatformStack extends cdk.Stack {
     ordersTable.grantWriteData(fraudLambda);
     bus.grantPutEventsTo(fraudLambda);
     reviewQueue.grantSendMessages(fraudLambda);
+    topic.grantPublish(fraudLambda);
 
     topic.grantPublish(notificationLambda);
     ordersTable.grantReadWriteData(reviewLambda);
@@ -158,8 +160,6 @@ export class PlatformStack extends cdk.Stack {
         detailType: [
           "OrderApproved",
           "OrderBlocked",
-          "OrderReview",
-          "OrderSentToReviewQueue",
           "OrderReviewResolved",
         ],
       },
@@ -320,6 +320,10 @@ def handler(event, context):
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
     });
+    fraudLambda.addEnvironment(
+      "FRONTEND_BASE_URL",
+      frontendBucket.bucketWebsiteUrl
+    );
 
     new s3deploy.BucketDeployment(this, "FrontendDeployment", {
       sources: [
