@@ -76,10 +76,10 @@ def handler(event, context):
         return _response(400, {"message": "Invalid JSON"})
 
     action = str(body.get("action", "")).upper()
-    reviewer = str(body.get("reviewer", "manual-reviewer")).strip() or "manual-reviewer"
-    notes = str(body.get("notes", "")).strip()
-    if action not in {"APPROVE", "REJECT"}:
-        return _response(400, {"message": "action must be APPROVE or REJECT"})
+    if action == "REJECT":
+        action = "BLOCK"
+    if action not in {"APPROVE", "BLOCK"}:
+        return _response(400, {"message": "action must be APPROVE or BLOCK"})
 
     existing = table.get_item(Key={"orderId": order_id}).get("Item")
     if not existing:
@@ -100,21 +100,18 @@ def handler(event, context):
             {"message": f"Order {order_id} review request not found in SQS"},
         )
 
-    resolved_status = "APPROVE" if action == "APPROVE" else "REJECT"
+    resolved_status = "APPROVE" if action == "APPROVE" else "BLOCK"
     resolved_at = int(time.time() * 1000)
     table.update_item(
         Key={"orderId": order_id},
         UpdateExpression=(
-            "SET #status = :status, reviewAction = :action, "
-            "reviewResolvedAt = :resolvedAt, reviewedBy = :reviewer, reviewNotes = :notes"
+            "SET #status = :status, fraudDecision = :decision, evaluatedAt = :resolvedAt"
         ),
         ExpressionAttributeNames={"#status": "status"},
         ExpressionAttributeValues={
             ":status": resolved_status,
-            ":action": action,
+            ":decision": resolved_status,
             ":resolvedAt": resolved_at,
-            ":reviewer": reviewer,
-            ":notes": notes,
         },
     )
 
@@ -129,8 +126,6 @@ def handler(event, context):
                         "orderId": order_id,
                         "action": action,
                         "resolvedStatus": resolved_status,
-                        "reviewer": reviewer,
-                        "notes": notes,
                         "resolvedAt": resolved_at,
                     }
                 ),
@@ -144,7 +139,6 @@ def handler(event, context):
             "ok": True,
             "orderId": order_id,
             "status": resolved_status,
-            "reviewAction": action,
-            "reviewer": reviewer,
+            "fraudDecision": resolved_status,
         },
     )

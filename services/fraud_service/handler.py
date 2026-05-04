@@ -2,6 +2,7 @@ import json
 import os
 import time
 from decimal import Decimal
+from urllib.parse import quote
 
 import boto3
 
@@ -12,6 +13,7 @@ from xgb_inference import predict_probability
 ddb = boto3.resource("dynamodb")
 events = boto3.client("events")
 sqs = boto3.client("sqs")
+sns = boto3.client("sns")
 
 
 def _clamp01(x: float) -> float:
@@ -75,6 +77,42 @@ def _update_order_status(order_id: str, out_detail: dict, review_message_id: str
     )
 
 
+def _notify_review_request(order_id: str, out_detail: dict, review_message_id: str | None) -> None:
+    topic_arn = os.environ.get("SNS_TOPIC_ARN")
+    if not topic_arn:
+        return
+
+    frontend_base_url = os.environ.get("FRONTEND_BASE_URL", "").rstrip("/")
+    review_url = (
+        f"{frontend_base_url}/review.html?orderId={quote(str(order_id))}"
+        if frontend_base_url and order_id != "unknown"
+        else ""
+    )
+    message = "\n".join(
+        [
+            "Manual fraud review required",
+            "",
+            f"Order ID: {order_id}",
+            f"Fraud score: {out_detail['score']:.4f}",
+            f"Current decision: {out_detail['decision']}",
+            f"Review message ID: {review_message_id or 'unavailable'}",
+            f"Queued at epoch ms: {out_detail['evaluatedAt']}",
+            "",
+            "Action required:",
+            "1. Open the review link below.",
+            "2. Sign in with the admin/demo Cognito user.",
+            "3. Choose Approve or Reject.",
+            "",
+            f"Review link: {review_url or 'Frontend URL not configured'}",
+        ]
+    )
+    sns.publish(
+        TopicArn=topic_arn,
+        Subject=f"Order needs manual review: {order_id}",
+        Message=message,
+    )
+
+
 def handler(event, context):
     bus_name = os.environ["EVENT_BUS_NAME"]
     review_queue_url = os.environ["REVIEW_QUEUE_URL"]
@@ -127,6 +165,7 @@ def handler(event, context):
             MessageBody=message_body,
         )
         review_message_id = send_result.get("MessageId")
+        _notify_review_request(order_id, out_detail, review_message_id)
 
     _update_order_status(order_id, out_detail, review_message_id)
 
